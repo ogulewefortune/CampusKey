@@ -11,7 +11,7 @@ CampusKey is a simple 2-week MVP for a multi-factor authentication system using 
 
 - **Mobile App:** Flutter (Dart) - Cross-platform for iOS/Android
 - **Backend API:** Python FastAPI - Lightweight & fast
-- **Database:** SQLite - Simple, no setup required (or in-memory dict for simplicity)
+- **Database:** SQLite - Simple, no  setup required (or in-memory dict for simplicity)
 
 ## 🗂️ PROJECT STRUCTURE
 
