@@ -1,19 +1,19 @@
 # CampusKey - Biometric & RFID Authentication System
 
-## 📋 PROJECT OVERVIEW
+##  PROJECT OVERVIEW
 
 CampusKey is a simple 2-week MVP for a multi-factor authentication system using Flutter (Mobile) + Python FastAPI (Backend) to replace textual passwords with biometric + RFID authentication for Fake University.
 
 **App Name:** CampusKey  
 **Testing:** Both iOS (iPhone) and Android devices
 
-## 🛠️ TECHNOLOGY STACK
+##  TECHNOLOGY STACK
 
 - **Mobile App:** Flutter (Dart) - Cross-platform for iOS/Android
 - **Backend API:** Python FastAPI - Lightweight & fast
 - **Database:** SQLite - Simple, no  setup required (or in-memory dict for simplicity)
 
-## 🗂️ PROJECT STRUCTURE
+##  PROJECT STRUCTURE
 
 ```
 campuskey/
@@ -27,7 +27,7 @@ campuskey/
     └── pubspec.yaml
 ```
 
-## 🚀 SETUP INSTRUCTIONS
+##  SETUP INSTRUCTIONS
 
 ### 1. Backend Setup
 
