@@ -37,7 +37,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-✅ You'll see: `Uvicorn running on http://0.0.0.0:8000`
+ You'll see: `Uvicorn running on http://0.0.0.0:8000`
 
 ### 2. Find Your Computer's IP Address
 
@@ -78,7 +78,7 @@ flutter run
 - Enable USB debugging in Developer Options
 - Run `flutter run`
 
-## 🐍 BACKEND CODE
+##  BACKEND CODE
 
 ### backend/requirements.txt
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
 ```
 
-## 📱 FLUTTER MOBILE APP CODE
+##  FLUTTER MOBILE APP CODE
 
 ### mobile_app/pubspec.yaml
 
@@ -208,14 +208,14 @@ class _LoginScreenState extends State<LoginScreen> {
       
       setState(() {
         if (data['success']) {
-          message = '✅ Welcome ${data['user']}! (${data['role']})';
+          message = ' Welcome ${data['user']}! (${data['role']})';
         } else {
-          message = '❌ ${data['message']}';
+          message = ' ${data['message']}';
         }
       });
     } catch (e) {
       setState(() {
-        message = '❌ Connection failed. Check server and IP address.';
+        message = ' Connection failed. Check server and IP address.';
       });
     } finally {
       setState(() {
@@ -308,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 ```
 
-## 🎯 TEST CREDENTIALS
+##  TEST CREDENTIALS
 
 | Role | Username | Password |
 |------|----------|----------|
@@ -316,14 +316,14 @@ class _LoginScreenState extends State<LoginScreen> {
 | Professor | `professor1` | `pass123` |
 | Admin | `admin1` | `pass123` |
 
-## ✅ WHAT YOU'LL SEE WORKING
+##  WHAT YOU'LL SEE WORKING
 
-- ✅ Python server running on your computer
-- ✅ Flutter app on both iPhone and Android
-- ✅ Login works - shows welcome message with role
-- ✅ Error handling - shows connection issues clearly
+-  Python server running on your computer
+-  Flutter app on both iPhone and Android
+-  Login works - shows welcome message with role
+-  Error handling - shows connection issues clearly
 
-## 🔧 TROUBLESHOOTING
+##  TROUBLESHOOTING
 
 ### Connection Issues
 
@@ -347,22 +347,22 @@ If connection fails:
    - Another application might be using port 8000
    - Change port in `main.py` if needed
 
-## 📝 NOTES
+##  NOTES
 
 - This is a simple MVP version - no SQLite database needed
 - The backend uses an in-memory dictionary for user storage
 - Works on both iOS and Android devices
 - Simple and straightforward - no over-complications!
 
-## 🎯 FEATURES
+## FEATURES
 
-- ✅ Secure authentication
-- ✅ Role-based access control (Student, Professor, Admin)
-- ✅ Cross-platform support (iOS & Android)
-- ✅ Simple and easy to use
-- ✅ Professional CampusKey branding
+-  Secure authentication
+-  Role-based access control (Student, Professor, Admin)
+-  Cross-platform support (iOS & Android)
+-  Simple and easy to use
+-  Professional CampusKey branding
 
 ---
 
-**Built with ❤️ for Fake University**
+**Built  for Fake University**
 
