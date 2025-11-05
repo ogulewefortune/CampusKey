@@ -5,6 +5,9 @@ name: campuskey
 # Project description - brief explanation of what the app does
 description: "Simple CampusKey App"
 
+# Version information - required for iOS builds
+version: 1.0.0+1
+
 # Environment section - defines Dart SDK version requirements
 environment:
   # SDK constraint - app requires Dart SDK version 3.0.0 or higher, but less than 4.0.0

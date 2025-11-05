@@ -1,13 +1,18 @@
 // Import Flutter's Material Design library - provides UI components (buttons, text fields, etc.)
 import 'package:flutter/material.dart';
+// BACKEND IMPORTS COMMENTED OUT FOR UI TESTING
 // Import Dart's convert library - used for JSON encoding/decoding
-import 'dart:convert';
+// import 'dart:convert';
 // Import HTTP package - used for making API calls to the backend server
-import 'package:http/http.dart' as http;
-// Import HomeScreen widget - the screen shown after successful login
-import 'screens/home_screen.dart';
+// import 'package:http/http.dart' as http;
 // Import SplashScreen widget - the initial loading screen with logo
 import 'screens/splash_screen.dart';
+// Import DashboardScreen widget - main app interface after login
+import 'screens/dashboard_screen.dart';
+// Import screens for alternative login methods
+import 'screens/face_login_screen.dart';
+import 'screens/rfid_simulation_screen.dart';
+import 'screens/password_reset_flow.dart';
 
 // Main entry point of the Flutter application
 // This function runs when the app starts and initializes MyApp widget
@@ -54,9 +59,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
 
   // REPLACE WITH YOUR COMPUTER'S IP ADDRESS
-  // Base URL for the backend API server
+  // Base URL for the backend API server (COMMENTED OUT FOR UI TESTING)
   // This should match your computer's IP address running the FastAPI server
-  String baseUrl = "http://10.100.159.199:8000";
+  // String baseUrl = "http://10.100.159.199:8000";
 
   // Async function to handle login process
   // async allows this function to wait for network requests
@@ -70,53 +75,84 @@ class _LoginScreenState extends State<LoginScreen> {
       message = 'Logging in...'; // Display loading message to user
     });
 
+    // BACKEND CALLS COMMENTED OUT - USING MOCK DATA FOR UI TESTING
     // try-catch block handles errors during API call
-    try {
-      // Make HTTP POST request to login endpoint
-      final response = await http.post(
-        Uri.parse('$baseUrl/login'), // Construct full URL for login endpoint
-        body: {
-          'username': usernameController.text, // Get username from text field
-          'password': passwordController.text, // Get password from text field
-        },
-      ).timeout(Duration(seconds: 5)); // Set 5 second timeout for request
+    // try {
+    //   // Make HTTP POST request to login endpoint
+    //   final response = await http.post(
+    //     Uri.parse('$baseUrl/login'), // Construct full URL for login endpoint
+    //     body: {
+    //       'username': usernameController.text, // Get username from text field
+    //       'password': passwordController.text, // Get password from text field
+    //     },
+    //   ).timeout(Duration(seconds: 5)); // Set 5 second timeout for request
 
-      // Decode JSON response from server to Dart Map
-      final data = jsonDecode(response.body);
+    //   // Decode JSON response from server to Dart Map
+    //   final data = jsonDecode(response.body);
       
-      // Update UI based on server response
-      setState(() {
-        // Check if login was successful
-        if (data['success']) {
-          message = ' Welcome ${data['user']}! (${data['role']})'; // Show welcome message
-          // Navigate to home screen after successful login
-          // pushReplacement replaces current screen (can't go back to login)
-          Navigator.pushReplacement(
-            context, // Current widget's context (required for navigation)
-            MaterialPageRoute(
-              // Builder function creates the HomeScreen widget
-              builder: (context) => HomeScreen(
-                username: data['user'], // Pass username from API response
-                role: data['role'], // Pass user role from API response
-              ),
-            ),
-          );
-        } else {
-          // If login failed, show error message from server
-          message = ' ${data['message']}';
-        }
-      });
-    } catch (e) {
-      // Handle any errors (network failure, timeout, etc.)
-      setState(() {
-        message = ' Connection failed. Check server and IP address.'; // Show connection error
-      });
-    } finally {
-      // Always execute this block, whether success or error
-      setState(() {
-        isLoading = false; // Reset loading flag to false
-      });
-    }
+    //   // Update UI based on server response
+    //   setState(() {
+    //     // Check if login was successful
+    //     if (data['success']) {
+    //       message = ' Welcome ${data['user']}! (${data['role']})'; // Show welcome message
+    //       // Navigate to home screen after successful login
+    //       // pushReplacement replaces current screen (can't go back to login)
+    //       Navigator.pushReplacement(
+    //         context, // Current widget's context (required for navigation)
+    //         MaterialPageRoute(
+    //           // Builder function creates the DashboardScreen widget
+    //           builder: (context) => DashboardScreen(
+    //             username: data['user'], // Pass username from API response
+    //             role: data['role'], // Pass user role from API response
+    //             token: data['token'] ?? '', // Pass token if available
+    //           ),
+    //         ),
+    //       );
+    //     } else {
+    //       // If login failed, show error message from server
+    //       message = ' ${data['message']}';
+    //     }
+    //   });
+    // } catch (e) {
+    //   // Handle any errors (network failure, timeout, etc.)
+    //   setState(() {
+    //     message = ' Connection failed. Check server and IP address.'; // Show connection error
+    //   });
+    // } finally {
+    //   // Always execute this block, whether success or error
+    //   setState(() {
+    //     isLoading = false; // Reset loading flag to false
+    //   });
+    // }
+
+    // MOCK DATA FOR UI TESTING - Simulate successful login
+    await Future.delayed(Duration(seconds: 1)); // Simulate network delay
+    
+    setState(() {
+      isLoading = false;
+      
+      // Determine role based on username
+      String role = 'student';
+      if (usernameController.text.contains('professor')) {
+        role = 'professor';
+      } else if (usernameController.text.contains('admin')) {
+        role = 'admin';
+      }
+      
+      message = ' Welcome ${usernameController.text}! ($role)';
+      
+      // Navigate to dashboard with mock data
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DashboardScreen(
+            username: usernameController.text.isEmpty ? 'student1' : usernameController.text,
+            role: role,
+            token: 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+          ),
+        ),
+      );
+    });
   }
 
   // Override build method - defines the UI structure of LoginScreen
@@ -161,6 +197,20 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               obscureText: true, // Hide password characters (show dots instead)
             ),
+            SizedBox(height: 10), // Empty space 10 pixels tall
+            // Forgot Password button
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PasswordResetFlowScreen()),
+                  );
+                },
+                child: Text('Forgot Password?'),
+              ),
+            ),
             SizedBox(height: 20), // Empty space 20 pixels tall
             
             // Login button
@@ -174,9 +224,54 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? CircularProgressIndicator(color: Colors.white) // Show spinner if loading
                   : Text('LOGIN', style: TextStyle(fontSize: 18)),
             ),
-            SizedBox(height: 20), // Empty space 20 pixels tall
+            SizedBox(height: 10), // Empty space 10 pixels tall
             
-            // Message display area (shows success/error messages)
+            // Divider with "OR" text
+            Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('OR', style: TextStyle(color: Colors.grey)),
+                ),
+                Expanded(child: Divider()),
+              ],
+            ),
+            SizedBox(height: 10), // Empty space 10 pixels tall
+            
+            // Face ID Login Button
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FaceLoginScreen()),
+                );
+              },
+              icon: Icon(Icons.face),
+              label: Text('Login with Face ID'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+                side: BorderSide(color: Colors.blue),
+              ),
+            ),
+            SizedBox(height: 10), // Empty space 10 pixels tall
+            
+            // RFID Card Login Button
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RFIDSimulationScreen()),
+                );
+              },
+              icon: Icon(Icons.credit_card),
+              label: Text('Tap RFID Card'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+                side: BorderSide(color: Colors.blue),
+              ),
+            ),
+            SizedBox(height: 20), // Empty space 20 pixels tall
             Text(message, style: TextStyle(fontSize: 16)),
             SizedBox(height: 10), // Empty space 10 pixels tall
             

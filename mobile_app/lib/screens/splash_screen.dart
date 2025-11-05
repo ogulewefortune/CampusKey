@@ -21,9 +21,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState(); // Call parent's initState (required)
-    // Navigate to login screen after 5 seconds
+    // Navigate to login screen after 2 seconds
     // Future.delayed waits for specified duration, then executes callback
-    Future.delayed(Duration(seconds: 5), () {
+    Future.delayed(Duration(seconds: 2), () {
       // Navigator.pushReplacement replaces current screen with new one
       // Unlike push(), this removes splash screen from navigation stack (can't go back)
       Navigator.pushReplacement(
