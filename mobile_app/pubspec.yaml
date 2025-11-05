@@ -1,15 +1,28 @@
+# Project name - used as package identifier (must be lowercase, no spaces)
+# This is how you'll import your app in other files: import 'package:campuskey/main.dart'
 name: campuskey
+
+# Project description - brief explanation of what the app does
 description: "Simple CampusKey App"
 
+# Environment section - defines Dart SDK version requirements
 environment:
+  # SDK constraint - app requires Dart SDK version 3.0.0 or higher, but less than 4.0.0
+  # This ensures compatibility with Flutter framework
   sdk: '>=3.0.0 <4.0.0'
 
+# Dependencies section - external packages your app needs to run
 dependencies:
+  # Flutter SDK - core Flutter framework (always required)
   flutter:
     sdk: flutter
+  # HTTP package - used for making API calls to backend server
+  # Version ^1.1.0 means 1.1.0 or higher, but less than 2.0.0
   http: ^1.1.0
 
+# Development dependencies - packages only needed during development/testing
 dev_dependencies:
+  # Flutter test framework - used for writing and running tests
   flutter_test:
     sdk: flutter
 
@@ -32,9 +45,11 @@ flutter:
   uses-material-design: true
 
   # Assets for the application
+  # These directories contain images, icons, and other static files
+  # Files in these folders can be accessed using Image.asset('assets/images/logo.png')
   assets:
-    - assets/images/
-    - assets/icons/
+    - assets/images/  # Directory for image files (logos, photos, etc.)
+    - assets/icons/   # Directory for icon files
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -45,8 +60,8 @@ flutter:
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
+  # list giving the asset and other descriptors for the font.
+  # Example:
   # fonts:
   #   - family: Schyler
   #     fonts:
