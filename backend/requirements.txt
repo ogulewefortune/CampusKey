@@ -2,7 +2,7 @@
 # This file lists all Python packages required for the backend server
 # Install with: pip install -r requirements.txt
 
-# Core FastAPI dependencies
+# Core API
 # FastAPI - modern, fast web framework for building APIs with Python
 fastapi==0.104.1
 # Uvicorn - ASGI server to run FastAPI application (handles HTTP requests)
@@ -10,11 +10,7 @@ uvicorn==0.24.0
 # python-multipart - required for handling file uploads and form data in FastAPI
 python-multipart==0.0.6
 
-# Database
-# Note: sqlite3 is included in Python standard library, no need to install
-# SQLite3 comes built-in with Python for lightweight database operations
-
-# Biometric Face Recognition
+# Biometric Authentication
 # opencv-python - OpenCV library for computer vision and image processing
 # Used for face detection and image manipulation
 opencv-python==4.8.1.78
@@ -31,15 +27,33 @@ numpy==1.24.3
 # Used for loading, saving, and manipulating image files
 Pillow==10.0.0
 
-# Authentication & Security
+# Security & Database
 # pyjwt - JSON Web Token library for creating and verifying JWT tokens
 # Used for secure authentication tokens between mobile app and backend
 pyjwt==2.8.0
 # bcrypt - password hashing library
 # Used for securely storing and verifying user passwords
 bcrypt==4.0.1
+# python-decouple - library for managing environment variables
+# Used for loading configuration from .env file securely
+python-decouple==3.8
+# Note: sqlite3 is included in Python standard library, no need to install
+# SQLite3 comes built-in with Python for lightweight database operations
 
-# RFID simulation and NFC
+# Email (for password recovery)
+# Note: smtplib is included in Python standard library, no need to install
+# smtplib - used for sending emails via SMTP protocol
+# email-validator - validates email addresses format
+email-validator==2.0.0
+
+# Utilities
+# Note: The following are built-in Python modules and don't need to be installed:
+# - secrets: Generate cryptographically strong random numbers
+# - string: String constants and utilities
+# - datetime: Date and time manipulation
+# - random: Generate pseudo-random numbers
+
+# RFID simulation and NFC (optional - for hardware integration)
 # pyserial - library for serial port communication
 # Used for communicating with RFID/NFC hardware readers via serial port
 pyserial==3.5
