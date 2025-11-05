@@ -6,6 +6,26 @@ A new Flutter project.
 
 This project is a starting point for a Flutter application.
 
+Splash Screen 
+    ↓
+Login Screen 
+    ↓ (multiple paths)
+    ├── Traditional Login → Dashboard
+    ├── Face Login → Face Scan → Dashboard  
+    ├── RFID Login → RFID Simulation → Dashboard
+    └── Forgot Password → Password Reset Flow → Login Screen
+
+Dashboard (Bottom Navigation)
+    ├── Home Tab (default)
+    ├── Access Control Tab
+    ├── History Tab  
+    └── Codes Tab
+
+Side Menu/Navigation Drawer
+    ├── Profile & Settings
+    ├── Biometric Registration
+    ├── RFID Management
+    └── Admin Panel (if admin)
 A few resources to get you started if this is your first Flutter project:
 
 - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
