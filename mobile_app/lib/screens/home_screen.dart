@@ -12,10 +12,10 @@ class HomeScreen extends StatelessWidget {
   // Constructor - creates HomeScreen widget with required username and role
   // const keyword allows this widget to be created at compile-time (performance optimization)
   const HomeScreen({
-    Key? key, // Optional key parameter for widget identification
+    super.key, // Optional key parameter for widget identification
     required this.username, // Required parameter - username must be provided
     required this.role, // Required parameter - role must be provided
-  }) : super(key: key); // Call parent constructor with key
+  }); // Call parent constructor with key
 
   // Override build method - defines the UI structure of HomeScreen
   @override
@@ -56,12 +56,12 @@ class HomeScreen extends StatelessWidget {
                 // Navigator.pop removes current screen and goes back to previous screen
                 // In this case, returns to LoginScreen (since we used pushReplacement)
                 Navigator.pop(context); // Go back to login screen
-              },
-              child: Text('Logout'), // Button label text
+              }, // Button label text
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red, // Red button background (indicates logout action)
                 minimumSize: Size(double.infinity, 50), // Full width, 50 pixels tall
               ),
+              child: Text('Logout'),
             ),
           ],
         ),

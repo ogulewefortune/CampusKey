@@ -16,6 +16,8 @@ void main() => runApp(MyApp());
 // MyApp class - Root widget of the application
 // StatelessWidget means this widget doesn't change its state during runtime
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   // Override the build method - required for all widgets
   // This method describes how to display this widget
   @override
@@ -32,6 +34,8 @@ class MyApp extends StatelessWidget {
 // LoginScreen class - Widget for user authentication
 // StatefulWidget allows this widget to change its state (e.g., user input, loading)
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   // Override createState - creates the state object that manages this widget
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -161,14 +165,14 @@ class _LoginScreenState extends State<LoginScreen> {
             
             // Login button
             ElevatedButton(
-              onPressed: isLoading ? null : login, // Disable if loading, otherwise call login()
-              child: isLoading 
-                  ? CircularProgressIndicator(color: Colors.white) // Show spinner if loading
-                  : Text('LOGIN', style: TextStyle(fontSize: 18)), // Show text if not loading
+              onPressed: isLoading ? null : login, // Show text if not loading
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue, // Blue button background
                 minimumSize: Size(double.infinity, 50), // Full width, 50 pixels tall
-              ),
+              ), // Disable if loading, otherwise call login()
+              child: isLoading 
+                  ? CircularProgressIndicator(color: Colors.white) // Show spinner if loading
+                  : Text('LOGIN', style: TextStyle(fontSize: 18)),
             ),
             SizedBox(height: 20), // Empty space 20 pixels tall
             

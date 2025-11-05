@@ -6,6 +6,8 @@ import '../main.dart';
 // SplashScreen class - Initial loading screen shown when app starts
 // StatefulWidget allows this widget to perform actions (like navigation) after a delay
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   // Override createState - creates the state object that manages this widget
   @override
   _SplashScreenState createState() => _SplashScreenState();
