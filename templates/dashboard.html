@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CampusKey{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'components/sidebar.html' %}
+    
+    <div class="main-content">
+        <h1>Dashboard</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <h3>Total Access</h3>
+                <div class="stat-value">0</div>
+            </div>
+            <div class="stat-card success">
+                <h3>Today's Access</h3>
+                <div class="stat-value">0</div>
+            </div>
+            <div class="stat-card info">
+                <h3>Weekly Access</h3>
+                <div class="stat-value">0</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Monthly Access</h3>
+                <div class="stat-value">0</div>
+            </div>
+        </div>
+        
+        <div class="quick-actions">
+            <a href="{{ url_for('biometric') }}" class="quick-action-btn btn btn-primary" data-action="scan">
+                Scan Biometric
+            </a>
+            <a href="{{ url_for('history') }}" class="quick-action-btn btn btn-secondary" data-action="history">
+                View History
+            </a>
+            <a href="{{ url_for('profile') }}" class="quick-action-btn btn btn-secondary" data-action="profile">
+                View Profile
+            </a>
+        </div>
+        
+        <div class="recent-activity card">
+            <div class="card-header">Recent Activity</div>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon">🔐</div>
+                    <div class="activity-content">
+                        <div class="activity-title">No recent activity</div>
+                        <div class="activity-time">Check back later</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+

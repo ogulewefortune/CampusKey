@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Biometric Scanner - CampusKey{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'components/sidebar.html' %}
+    
+    <div class="main-content">
+        <h1>Biometric Scanner</h1>
+        
+        <div class="card">
+            <div class="card-header">Scan Your Biometric</div>
+            <div style="text-align: center; padding: 2rem;">
+                <div id="scanner-area" style="margin: 2rem 0;">
+                    <div style="width: 300px; height: 300px; border: 3px dashed #ddd; border-radius: 8px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: #f9f9f9;">
+                        <div>
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">👆</div>
+                            <p>Place your finger on the scanner</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <button id="scanButton" class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                        Start Scan
+                    </button>
+                </div>
+                
+                <div id="scan-result" style="margin-top: 2rem; display: none;">
+                    <div class="alert" id="result-message"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Recent Scans</div>
+            <div id="recent-scans">
+                <p class="text-center">No recent scans</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const scanButton = document.getElementById('scanButton');
+    const scanResult = document.getElementById('scan-result');
+    const resultMessage = document.getElementById('result-message');
+    
+    scanButton.addEventListener('click', function() {
+        // Simulate biometric scan
+        scanButton.disabled = true;
+        scanButton.textContent = 'Scanning...';
+        
+        setTimeout(function() {
+            // Simulate successful scan
+            scanResult.style.display = 'block';
+            resultMessage.className = 'alert alert-success';
+            resultMessage.textContent = 'Biometric scan successful! Access granted.';
+            
+            // Record access
+            recordAccess('biometric', 'main_gate');
+            
+            scanButton.disabled = false;
+            scanButton.textContent = 'Scan Again';
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}
+

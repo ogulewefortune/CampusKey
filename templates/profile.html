@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - CampusKey{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'components/sidebar.html' %}
+    
+    <div class="main-content">
+        <h1>My Profile</h1>
+        
+        <div class="card">
+            <div class="card-header">User Information</div>
+            <form method="POST" action="{{ url_for('profile') }}">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" value="{{ user.username }}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" value="{{ user.email }}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" value="{{ user.first_name }}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" value="{{ user.last_name }}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Student ID</label>
+                    <input type="text" value="{{ user.student_id or 'N/A' }}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Account Status</label>
+                    <input type="text" value="{% if user.is_active %}Active{% else %}Inactive{% endif %}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Member Since</label>
+                    <input type="text" value="{{ user.created_at.strftime('%Y-%m-%d') }}" disabled>
+                </div>
+            </form>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Change Password</div>
+            <form method="POST" action="{{ url_for('profile') }}">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" id="current_password" name="current_password">
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Update Password</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

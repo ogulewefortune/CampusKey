@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - CampusKey{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'components/sidebar.html' %}
+    
+    <div class="main-content">
+        <h1>Admin Panel</h1>
+        
+        <div class="card">
+            <div class="card-header">Users Management</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Student ID</th>
+                        <th>Status</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if users %}
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.student_id or 'N/A' }}</td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span style="color: green;">Active</span>
+                                {% else %}
+                                    <span style="color: red;">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_admin %}
+                                    <span style="color: blue;">Admin</span>
+                                {% else %}
+                                    User
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm">Edit</button>
+                                <button class="btn btn-danger btn-sm">Delete</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No users found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Access Logs</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>User</th>
+                        <th>Access Type</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if logs %}
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>{{ log.user.username }}</td>
+                            <td>{{ log.access_type }}</td>
+                            <td>{{ log.location }}</td>
+                            <td>
+                                {% if log.success %}
+                                    <span style="color: green;">✓ Success</span>
+                                {% else %}
+                                    <span style="color: red;">✗ Failed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No access logs found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
