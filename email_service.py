@@ -1,86 +1,181 @@
+# Python import statement: Imports random module for generating random numbers
+# Used to create random verification codes
 import random
+
+# Python import statement: Imports string module for string constants
+# string.digits provides '0123456789' for generating numeric codes
 import string
+
+# Python import statement: Imports datetime and timedelta classes from datetime module
+# datetime: Used for creating timestamps
+# timedelta: Used for calculating time differences (e.g., code expiration)
 from datetime import datetime, timedelta
+
+# Python import statement: Imports os module for accessing environment variables
+# Used to read SMTP configuration from system environment variables
 import os
+
+# Python import statement: Imports smtplib module for sending emails via SMTP protocol
+# smtplib provides SMTP client functionality to send emails
 import smtplib
+
+# Python import statement: Imports MIMEText class for creating plain text email messages
+# MIMEText is used to create email body content
 from email.mime.text import MIMEText
+
+# Python import statement: Imports MIMEMultipart class for creating multipart email messages
+# MIMEMultipart allows combining HTML and plain text versions in one email
 from email.mime.multipart import MIMEMultipart
+
+# Python import statement: Imports Header class for properly encoding email headers
+# Header handles UTF-8 encoding for non-ASCII characters in email subjects
 from email.header import Header
 
 
+# Python function definition: Function to generate a random 6-digit verification code
 def generate_verification_code():
+    # Python docstring: Documents what the function does
     """Generate a random 6-digit code"""
+    # Python return statement: Returns a string of 6 random digits
+    # random.choices() selects 6 random digits from string.digits
+    # ''.join() concatenates the selected digits into a single string
     return ''.join(random.choices(string.digits, k=6))
 
 
+# Python function definition: Function to send verification code via email
+# Parameters: email_address (recipient), code (verification code), username (for personalization)
 def send_email_code(email_address, code, username):
+    # Python docstring: Documents function purpose and behavior
     """
     Send verification code via email.
     Uses SMTP if configured, otherwise prints to console for testing.
     """
+    # Python comment: Marks email configuration section
     # Email configuration from environment variables
+    # Python variable: Gets SMTP server address from environment variable
+    # os.environ.get() reads env var with fallback to Gmail's SMTP server
     smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+    
+    # Python variable: Gets SMTP port number from environment variable
+    # int() converts string to integer, defaults to 587 (TLS port)
     smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    
+    # Python variable: Gets SMTP username (email address) from environment variable
+    # None if not set - used to check if email is configured
     smtp_username = os.environ.get('SMTP_USERNAME')
+    
+    # Python variable: Gets SMTP password from environment variable
+    # .replace('\xa0', ' ') removes non-breaking spaces that can cause login issues
+    # .strip() removes leading/trailing whitespace
     smtp_password = os.environ.get('SMTP_PASSWORD', '').replace('\xa0', ' ').strip()  # Fix non-breaking spaces
+    
+    # Python variable: Gets sender email address from environment variable
+    # Falls back to smtp_username if FROM_EMAIL not set
     from_email = os.environ.get('FROM_EMAIL', smtp_username)
     
+    # Python variable: Sets email subject line
+    # This appears in the recipient's email client
     subject = "CAMPUSKEY Verification Code"
     
+    # Python comment: Marks HTML email template section
     # HTML email template matching Google style
+    # Python f-string: Multi-line string with variable interpolation
+    # f""" allows embedding {variables} in the HTML template
     html_body = f"""
+    # HTML5 document type declaration
     <!DOCTYPE html>
+    # HTML root element: Contains all HTML content
     <html>
+    # HTML head section: Contains metadata
     <head>
+        # Meta tag: Sets character encoding to UTF-8
         <meta charset="UTF-8">
+        # Meta tag: Sets viewport for responsive design on mobile devices
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
+    # HTML body element: Contains visible email content
+    # Inline CSS: Sets dark theme styling matching Google's design
     <body style="margin: 0; padding: 0; font-family: 'Google Sans', Roboto, Arial, sans-serif; background-color: #202124; color: #e8eaed;">
+        # HTML table: Outer container for email layout (100% width)
+        # Table-based layout ensures compatibility across email clients
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #202124; padding: 20px;">
+            # HTML table row
             <tr>
+                # HTML table cell: Centers inner content
                 <td align="center">
+                    # HTML table: Inner container (600px max width for email clients)
                     <table width="600" cellpadding="0" cellspacing="0" style="background-color: #202124; max-width: 600px;">
+                        # HTML comment: Marks blue banner header section
                         <!-- Blue Banner Header -->
+                        # HTML table row: Header row
                         <tr>
+                            # HTML table cell: Blue header with white text
+                            # Inline CSS: Google blue (#1a73e8) background, white text
                             <td style="background-color: #1a73e8; padding: 24px 32px; text-align: center;">
+                                # HTML heading: Main title in header
+                                # Inline CSS: White color, specific font size and weight
                                 <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 400; letter-spacing: 0.25px;">CAMPUSKEY Verification Code</h1>
                             </td>
                         </tr>
                         
+                        # HTML comment: Marks email body content section
                         <!-- Email Body -->
+                        # HTML table row: Main content row
                         <tr>
+                            # HTML table cell: Dark background body content
+                            # Inline CSS: Dark gray background, light gray text
                             <td style="background-color: #202124; padding: 32px; color: #e8eaed; font-size: 14px; line-height: 20px;">
+                                # HTML paragraph: Greeting to user
                                 <p style="margin: 0 0 16px 0; color: #e8eaed;">Dear CAMPUSKEY User,</p>
                                 
+                                # HTML paragraph: Explanation of why email was sent
+                                # Python f-string variable: {email_address} inserts recipient's email
                                 <p style="margin: 0 0 16px 0; color: #e8eaed;">
                                     We received a request to access your CAMPUSKEY Account
+                                    # HTML span: Highlights email address in blue
                                     <span style="color: #8ab4f8; text-decoration: underline;">{email_address}</span>
                                     through your email address. Your CAMPUSKEY verification code is:
                                 </p>
                                 
+                                # HTML comment: Marks verification code display section
                                 <!-- Verification Code Display -->
+                                # HTML div: Container for centered code display
                                 <div style="margin: 24px 0; text-align: center;">
+                                    # HTML div: Large, monospace font for code display
+                                    # Inline CSS: Large font size, letter spacing, monospace font
+                                    # Python f-string variable: {code} inserts the 6-digit verification code
                                     <div style="font-size: 36px; font-weight: 400; color: #e8eaed; letter-spacing: 8px; font-family: 'Courier New', monospace;">
                                         {code}
                                     </div>
                                 </div>
                                 
+                                # HTML paragraph: Security warning message
+                                # Python f-string variable: {email_address} inserts email again
                                 <p style="margin: 16px 0; color: #e8eaed;">
                                     If you did not request this code, it is possible that someone else is trying to access the CAMPUSKEY Account
+                                    # HTML span: Highlights email address
                                     <span style="color: #8ab4f8; text-decoration: underline;">{email_address}</span>.
                                     Do not forward or give this code to anyone.
                                 </p>
                                 
+                                # HTML paragraph: Closing signature line 1
                                 <p style="margin: 24px 0 0 0; color: #e8eaed;">Sincerely yours,</p>
+                                # HTML paragraph: Closing signature line 2
                                 <p style="margin: 4px 0 0 0; color: #e8eaed;">The CAMPUSKEY Security Team</p>
                             </td>
                         </tr>
                         
+                        # HTML comment: Marks footer section
                         <!-- Footer -->
+                        # HTML table row: Footer row
                         <tr>
+                            # HTML table cell: Footer content with help center link
                             <td style="padding: 16px 32px; text-align: center;">
+                                # HTML paragraph: Footer text with link
+                                # Inline CSS: Smaller gray text
                                 <p style="margin: 0; color: #9aa0a6; font-size: 12px; line-height: 16px;">
                                     This email can't receive replies. For more information, visit the
+                                    # HTML anchor: Link to help center (placeholder #)
                                     <a href="#" style="color: #8ab4f8; text-decoration: underline;">CAMPUSKEY Help Center</a>.
                                 </p>
                             </td>
@@ -93,7 +188,10 @@ def send_email_code(email_address, code, username):
     </html>
     """
     
+    # Python comment: Marks plain text email version section
     # Plain text version for email clients that don't support HTML
+    # Python f-string: Multi-line plain text email template
+    # Plain text ensures email is readable even if HTML rendering fails
     text_body = f"""Dear CAMPUSKEY User,
 
 We received a request to access your CAMPUSKEY Account {email_address} through your email address. Your CAMPUSKEY verification code is:
@@ -109,61 +207,125 @@ The CAMPUSKEY Security Team
 This email can't receive replies. For more information, visit the CAMPUSKEY Help Center.
         """
     
+    # Python comment: Marks SMTP email sending section
     # If SMTP is configured, try to send email
+    # Python conditional: Checks if both username and password are configured
     if smtp_username and smtp_password:
+        # Python try block: Attempts to send email, catches exceptions
         try:
+            # Python print statement: Outputs status message to console
             print(f"\n Attempting to send email...")
+            # Python print statement: Displays sender email address
             print(f"   From: {from_email}")
+            # Python print statement: Displays recipient email address
             print(f"   To: {email_address}")
+            # Python print statement: Displays SMTP server and port
             print(f"   Server: {smtp_server}:{smtp_port}")
             
+            # Python object creation: Creates multipart email message
+            # 'alternative' allows both HTML and plain text versions
             msg = MIMEMultipart('alternative')
+            # Python attribute assignment: Sets sender email address
             msg['From'] = from_email
+            # Python attribute assignment: Sets recipient email address
             msg['To'] = email_address
+            # Python attribute assignment: Sets email subject with UTF-8 encoding
+            # Header() ensures proper encoding for special characters
             msg['Subject'] = Header(subject, 'utf-8')
             
+            # Python comment: Marks email body attachment section
             # Add both plain text and HTML versions
+            # Python object creation: Creates plain text email part
+            # MIMEText() creates email body with specified content type and encoding
             part1 = MIMEText(text_body, 'plain', 'utf-8')
+            # Python object creation: Creates HTML email part
             part2 = MIMEText(html_body, 'html', 'utf-8')
             
+            # Python method call: Attaches plain text version to email message
             msg.attach(part1)
+            # Python method call: Attaches HTML version to email message
             msg.attach(part2)
             
+            # Python object creation: Creates SMTP connection to email server
+            # smtplib.SMTP() connects to SMTP server on specified port
+            # timeout=10 sets 10-second timeout for connection
             server = smtplib.SMTP(smtp_server, smtp_port, timeout=10)
+            # Python method call: Starts TLS encryption for secure connection
+            # starttls() upgrades connection to encrypted TLS
             server.starttls()
+            # Python method call: Authenticates with SMTP server using credentials
+            # login() sends username and password to server
             server.login(smtp_username, smtp_password)
+            # Python method call: Converts email message to string format
+            # as_string() serializes the MIME message for sending
             text = msg.as_string()
+            # Python method call: Sends email to recipient
+            # sendmail() sends the email and returns dictionary of failed recipients
+            # Empty dictionary {} means success, non-empty means some failures
             result = server.sendmail(from_email, [email_address], text)
+            # Python method call: Closes SMTP connection
+            # quit() properly closes the connection to the server
             server.quit()
             
+            # Python conditional: Checks if email sending failed
+            # result is empty dict {} on success, non-empty dict on failure
             if result:
+                # Python variable: Creates error message string
+                # f-string formats error message with result details
                 error_msg = f"Email send failed: {result}"
+                # Python print statement: Outputs error message
                 print(f" {error_msg}")
+                # Python raise statement: Raises exception to stop execution
                 raise Exception(error_msg)
             else:
+                # Python else clause: Executes if email sent successfully
+                # Python print statement: Outputs success message
                 print(f" Email sent successfully to {email_address}")
+                # Python return statement: Returns True to indicate success
                 return True
+        # Python except clause: Catches SMTP-specific exceptions
         except smtplib.SMTPException as e:
+            # Python variable: Creates error message with exception details
             error_msg = f"SMTP error: {e}"
+            # Python print statement: Outputs error message
             print(f" {error_msg}")
+            # Python import statement: Imports traceback module for error details
             import traceback
+            # Python print statement: Outputs full error traceback
+            # format_exc() returns formatted stack trace as string
             print(f"   Traceback: {traceback.format_exc()}")
+            # Python raise statement: Re-raises exception with custom message
             raise Exception(error_msg)
+        # Python except clause: Catches all other exceptions
         except Exception as e:
+            # Python variable: Creates generic error message
             error_msg = f"Email sending failed: {e}"
+            # Python print statement: Outputs error message
             print(f" {error_msg}")
+            # Python import statement: Imports traceback module
             import traceback
+            # Python print statement: Outputs full error traceback
             print(f"   Traceback: {traceback.format_exc()}")
+            # Python raise statement: Re-raises exception with custom message
             raise Exception(error_msg)
     
+    # Python comment: Marks fallback console output section
     # Fallback: Print to console for testing
+    # Python print statement: Outputs separator line (50 equal signs)
     print("\n" + "="*50)
+    # Python print statement: Outputs header indicating testing mode
     print(f" EMAIL CODE (Testing Mode)")
+    # Python print statement: Displays recipient email address
     print(f"To: {email_address}")
+    # Python print statement: Displays email subject
     print(f"Subject: {subject}")
+    # Python print statement: Displays verification code
     print(f"Code: {code}")
+    # Python print statement: Outputs blank line and plain text message
     print(f"\nPlain Text Message:\n{text_body}")
+    # Python print statement: Outputs closing separator line
     print("="*50 + "\n")
     
+    # Python return statement: Returns True to indicate function completed
+    # Even in testing mode, function returns success
     return True
-
