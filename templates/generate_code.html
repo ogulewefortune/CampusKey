@@ -1,415 +1,551 @@
+{# Jinja2 template directive: Extends the base.html template to inherit its structure and styling #}
 {% extends "base.html" %}
 
+{# Jinja2 template directive: Defines the content block that will be inserted into base.html #}
 {% block content %}
+{# Main container div: Wraps the entire page content with max-width and centering styles #}
 <div class="page-container">
+    {# Page header section: Contains the title and subtitle of the page #}
     <div class="page-header">
+        {# Main page heading: Displays "Generate Access Code" as the primary title #}
         <h1 class="page-title">Generate Access Code</h1>
+        {# Subtitle paragraph: Provides a brief description of what the page does #}
         <p class="page-subtitle">Create secure, random passcodes for various purposes</p>
     </div>
 
+    {# Main content section: Contains all the generator components in a vertical flex layout #}
     <div class="code-generator-section">
+        {# HTML comment: Marks the start of the instructions card section #}
         <!-- Instructions Card -->
+        {# Instructions card container: White card displaying step-by-step instructions #}
         <div class="info-card">
+            {# Instructions heading: Title for the instructions section #}
             <h2 class="card-title">How to Generate a Passcode</h2>
+            {# Procedure list container: Flex column container for all instruction steps #}
             <div class="procedure-list">
+                {# Step 1 container: First instruction step with number and content #}
                 <div class="procedure-step">
+                    {# Step number badge: Circular blue badge displaying "1" #}
                     <div class="step-number">1</div>
+                    {# Step content wrapper: Contains the step title and description #}
                     <div class="step-content">
+                        {# Step 1 heading: Title for selecting passcode length #}
                         <h3>Select Passcode Length</h3>
+                        {# Step 1 description: Explains how to choose passcode length (8-32 chars) #}
                         <p>Choose the desired length for your passcode (8-32 characters). Longer passcodes are more secure.</p>
                     </div>
                 </div>
+                {# Step 2 container: Second instruction step with number and content #}
                 <div class="procedure-step">
+                    {# Step number badge: Circular blue badge displaying "2" #}
                     <div class="step-number">2</div>
+                    {# Step content wrapper: Contains the step title and description #}
                     <div class="step-content">
+                        {# Step 2 heading: Title for choosing options #}
                         <h3>Choose Options</h3>
+                        {# Step 2 description: Explains the option to include special symbols #}
                         <p>Optionally include special symbols (!@#$%^&*) for enhanced security.</p>
                     </div>
                 </div>
+                {# Step 3 container: Third instruction step with number and content #}
                 <div class="procedure-step">
+                    {# Step number badge: Circular blue badge displaying "3" #}
                     <div class="step-number">3</div>
+                    {# Step content wrapper: Contains the step title and description #}
                     <div class="step-content">
+                        {# Step 3 heading: Title for generating the code #}
                         <h3>Generate Code</h3>
+                        {# Step 3 description: Explains clicking the button to generate secure code #}
                         <p>Click the "Generate Passcode" button to create a cryptographically secure random code.</p>
                     </div>
                 </div>
+                {# Step 4 container: Fourth instruction step with number and content #}
                 <div class="procedure-step">
+                    {# Step number badge: Circular blue badge displaying "4" #}
                     <div class="step-number">4</div>
+                    {# Step content wrapper: Contains the step title and description #}
                     <div class="step-content">
+                        {# Step 4 heading: Title for copying and using the passcode #}
                         <h3>Copy & Use</h3>
+                        {# Step 4 description: Explains copying and securely storing the passcode #}
                         <p>Copy the generated passcode and use it for your intended purpose. Store it securely.</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        {# HTML comment: Marks the start of the generator card section #}
         <!-- Generator Card -->
+        {# Generator card container: White card containing the actual passcode generator controls #}
         <div class="generator-card">
+            {# Generator heading: Title for the passcode generator section #}
             <h2 class="card-title">Passcode Generator</h2>
             
+            {# Generator controls container: Flex column container for all input controls #}
             <div class="generator-controls">
+                {# Control group 1: Container for the passcode length selector #}
                 <div class="control-group">
+                    {# Label for passcode length: Text label associated with the range input #}
                     <label for="passcodeLength">Passcode Length:</label>
+                    {# Length control wrapper: Flex container for slider and display value #}
                     <div class="length-control">
+                        {# Range input: Slider control allowing user to select length between 8-32, default 12, calls updateLengthDisplay on change #}
                         <input type="range" id="passcodeLength" min="8" max="32" value="12" oninput="updateLengthDisplay(this.value)">
+                        {# Length display span: Shows the current selected length value (initially "12") #}
                         <span id="lengthDisplay">12</span>
                     </div>
                 </div>
                 
+                {# Control group 2: Container for the symbols checkbox option #}
                 <div class="control-group">
+                    {# Checkbox label wrapper: Flex container that makes entire label clickable #}
                     <label class="checkbox-label">
+                        {# Checkbox input: Toggle for including special symbols in passcode (unchecked by default) #}
                         <input type="checkbox" id="includeSymbols">
+                        {# Checkbox label text: Descriptive text explaining what the checkbox does #}
                         Include special symbols (!@#$%^&*)
                     </label>
                 </div>
                 
+                {# Generate button: Primary action button that triggers passcode generation #}
                 <button class="generate-btn" onclick="generatePasscode()">
+                    {# SVG icon: Grid pattern icon (4 squares) displayed before button text #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG rectangle 1: Top-left square in the grid icon #}
                         <rect x="3" y="3" width="5" height="5"></rect>
+                        {# SVG rectangle 2: Bottom-left square in the grid icon #}
                         <rect x="3" y="16" width="5" height="5"></rect>
+                        {# SVG rectangle 3: Top-right square in the grid icon #}
                         <rect x="16" y="3" width="5" height="5"></rect>
+                        {# SVG rectangle 4: Bottom-right square in the grid icon #}
                         <rect x="16" y="16" width="5" height="5"></rect>
                     </svg>
+                    {# Button text: Label displayed on the generate button #}
                     Generate Passcode
                 </button>
             </div>
 
+            {# Result container: Hidden div that displays the generated passcode (initially hidden with display:none) #}
             <div id="resultContainer" class="result-container" style="display: none;">
+                {# Result header: Flex container for title and copy button #}
                 <div class="result-header">
+                    {# Result heading: Title text for the generated passcode section #}
                     <h3>Generated Passcode</h3>
+                    {# Copy button: Button that copies the passcode to clipboard when clicked #}
                     <button class="copy-btn" onclick="copyPasscode()">
+                        {# SVG copy icon: Clipboard icon displayed before "Copy" text #}
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            {# SVG clipboard rectangle: Main clipboard shape #}
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            {# SVG clipboard path: Overlapping clipboard shape for depth effect #}
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
+                        {# Copy button text: Label displayed on the copy button #}
                         Copy
                     </button>
                 </div>
+                {# Passcode display container: Styled box showing the generated passcode in monospace font #}
                 <div class="passcode-display">
+                    {# Code element: Monospace text element that will contain the generated passcode #}
                     <code id="generatedPasscode"></code>
                 </div>
+                {# Passcode info container: Small text showing length and timestamp of generation #}
                 <div class="passcode-info">
+                    {# Length info span: Displays the character count of generated passcode #}
                     <span id="passcodeLengthInfo"></span> • 
+                    {# Timestamp span: Displays when the passcode was generated #}
                     <span id="passcodeTimestamp"></span>
                 </div>
             </div>
         </div>
 
+        {# HTML comment: Marks the start of the security tips section #}
         <!-- Security Tips -->
+        {# Tips card container: White card displaying security best practices #}
         <div class="tips-card">
+            {# Tips heading: Title for the security best practices section #}
             <h2 class="card-title">Security Best Practices</h2>
+            {# Tips list container: Unordered list of security recommendations #}
             <ul class="tips-list">
+                {# Tip 1: List item recommending unique passcodes for different services #}
                 <li>Use unique passcodes for different services</li>
+                {# Tip 2: List item warning against sharing passcodes #}
                 <li>Never share your passcodes with anyone</li>
+                {# Tip 3: List item recommending password manager usage #}
                 <li>Use a password manager to store passcodes securely</li>
+                {# Tip 4: List item recommending regular passcode changes #}
                 <li>Change passcodes regularly for sensitive accounts</li>
+                {# Tip 5: List item recommending minimum length for important accounts #}
                 <li>Use at least 12-16 characters for important accounts</li>
+                {# Tip 6: List item warning against using personal information #}
                 <li>Avoid using personal information in passcodes</li>
             </ul>
         </div>
     </div>
 </div>
 
+{# HTML style tag: Begins embedded CSS stylesheet for page-specific styling #}
 <style>
+{# CSS rule: Styles the main page container with max width, auto margins, and padding #}
 .page-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px;
+    max-width: 1200px;  /* Maximum width constraint for content */
+    margin: 0 auto;      /* Centers the container horizontally */
+    padding: 32px;      /* Adds 32px padding on all sides */
 }
 
+{# CSS rule: Styles the page header section with bottom margin #}
 .page-header {
-    margin-bottom: 32px;
+    margin-bottom: 32px;  /* Adds 32px space below the header */
 }
 
+{# CSS rule: Styles the main page title with large font, bold weight, blue color, and bottom margin #}
 .page-title {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1a56db;
-    margin-bottom: 8px;
+    font-size: 32px;        /* Sets font size to 32 pixels */
+    font-weight: 700;       /* Makes text bold (700 = extra bold) */
+    color: #1a56db;        /* Sets text color to blue */
+    margin-bottom: 8px;    /* Adds 8px space below the title */
 }
 
+{# CSS rule: Styles the page subtitle with medium font size and gray color #}
 .page-subtitle {
-    font-size: 16px;
-    color: #666;
+    font-size: 16px;   /* Sets font size to 16 pixels */
+    color: #666;       /* Sets text color to medium gray */
 }
 
+{# CSS rule: Styles the main generator section as a vertical flex container with gap spacing #}
 .code-generator-section {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    display: flex;           /* Enables flexbox layout */
+    flex-direction: column;   /* Stacks children vertically */
+    gap: 24px;               /* Adds 24px space between flex items */
 }
 
+{# CSS rule: Styles all card containers (info, generator, tips) with white background, rounded corners, padding, and shadow #}
 .info-card, .generator-card, .tips-card {
-    background: white;
-    border-radius: 12px;
-    padding: 32px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    background: white;                                    /* White background color */
+    border-radius: 12px;                                 /* Rounds corners by 12px */
+    padding: 32px;                                       /* Adds 32px padding inside */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);         /* Adds subtle shadow effect */
 }
 
+{# CSS rule: Styles card titles with large font, semi-bold weight, dark color, and bottom margin #}
 .card-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 24px;
+    font-size: 24px;        /* Sets font size to 24 pixels */
+    font-weight: 600;       /* Makes text semi-bold */
+    color: #111827;         /* Sets text color to near-black */
+    margin-bottom: 24px;    /* Adds 24px space below the title */
 }
 
+{# CSS rule: Styles the procedure list container as a vertical flex with gap spacing #}
 .procedure-list {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    display: flex;           /* Enables flexbox layout */
+    flex-direction: column;  /* Stacks children vertically */
+    gap: 24px;               /* Adds 24px space between steps */
 }
 
+{# CSS rule: Styles each procedure step as a horizontal flex container aligned to start #}
 .procedure-step {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
+    display: flex;           /* Enables flexbox layout */
+    gap: 16px;               /* Adds 16px space between number and content */
+    align-items: flex-start; /* Aligns items to the top */
 }
 
+{# CSS rule: Styles the step number badge as a circular blue element with centered content #}
 .step-number {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #1a56db;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    flex-shrink: 0;
+    width: 40px;             /* Sets width to 40 pixels */
+    height: 40px;           /* Sets height to 40 pixels */
+    border-radius: 50%;     /* Makes it perfectly circular */
+    background: #1a56db;    /* Sets background to blue */
+    color: white;           /* Sets text color to white */
+    display: flex;           /* Enables flexbox for centering */
+    align-items: center;     /* Centers content vertically */
+    justify-content: center; /* Centers content horizontally */
+    font-weight: 600;       /* Makes number bold */
+    flex-shrink: 0;         /* Prevents number from shrinking */
 }
 
+{# CSS rule: Styles step content headings with medium font, bold weight, dark color, and bottom margin #}
 .step-content h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 8px;
+    font-size: 18px;        /* Sets font size to 18 pixels */
+    font-weight: 600;       /* Makes text semi-bold */
+    color: #111827;         /* Sets text color to near-black */
+    margin-bottom: 8px;    /* Adds 8px space below heading */
 }
 
+{# CSS rule: Styles step content paragraphs with small font, gray color, and increased line height #}
 .step-content p {
-    font-size: 14px;
-    color: #6b7280;
-    line-height: 1.6;
+    font-size: 14px;        /* Sets font size to 14 pixels */
+    color: #6b7280;         /* Sets text color to medium gray */
+    line-height: 1.6;       /* Increases line spacing for readability */
 }
 
+{# CSS rule: Styles the generator controls container as a vertical flex with gap spacing #}
 .generator-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    display: flex;           /* Enables flexbox layout */
+    flex-direction: column;  /* Stacks controls vertically */
+    gap: 24px;               /* Adds 24px space between controls */
 }
 
+{# CSS rule: Styles each control group as a vertical flex container with small gap #}
 .control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: flex;           /* Enables flexbox layout */
+    flex-direction: column;  /* Stacks label and input vertically */
+    gap: 8px;                /* Adds 8px space between label and input */
 }
 
+{# CSS rule: Styles control group labels with small font, bold weight, and dark color #}
 .control-group label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #111827;
+    font-size: 14px;        /* Sets font size to 14 pixels */
+    font-weight: 600;       /* Makes text semi-bold */
+    color: #111827;         /* Sets text color to near-black */
 }
 
+{# CSS rule: Styles the length control wrapper as a horizontal flex with centered alignment #}
 .length-control {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    display: flex;           /* Enables flexbox layout */
+    align-items: center;     /* Centers items vertically */
+    gap: 16px;               /* Adds 16px space between slider and display */
 }
 
+{# CSS rule: Styles the range input slider with flexible width, height, rounded corners, gray background, and no outline #}
 .length-control input[type="range"] {
-    flex: 1;
-    height: 8px;
-    border-radius: 4px;
-    background: #e5e7eb;
-    outline: none;
+    flex: 1;                 /* Allows slider to take available space */
+    height: 8px;             /* Sets slider track height to 8px */
+    border-radius: 4px;      /* Rounds slider track corners */
+    background: #e5e7eb;    /* Sets track background to light gray */
+    outline: none;           /* Removes default browser outline */
 }
 
+{# CSS rule: Styles the range slider thumb (handle) for WebKit browsers with custom appearance #}
 .length-control input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #1a56db;
-    cursor: pointer;
+    appearance: none;         /* Removes default browser styling */
+    width: 20px;             /* Sets thumb width to 20px */
+    height: 20px;            /* Sets thumb height to 20px */
+    border-radius: 50%;      /* Makes thumb circular */
+    background: #1a56db;    /* Sets thumb color to blue */
+    cursor: pointer;         /* Changes cursor to pointer on hover */
 }
 
+{# CSS rule: Styles the length display span with large font, bold weight, blue color, and minimum width #}
 .length-control span {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1a56db;
-    min-width: 40px;
+    font-size: 18px;         /* Sets font size to 18 pixels */
+    font-weight: 600;        /* Makes text semi-bold */
+    color: #1a56db;          /* Sets text color to blue */
+    min-width: 40px;         /* Ensures minimum width for number display */
 }
 
+{# CSS rule: Styles checkbox labels as horizontal flex containers with centered alignment and pointer cursor #}
 .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-weight: 400;
+    display: flex;           /* Enables flexbox layout */
+    align-items: center;     /* Centers checkbox and text vertically */
+    gap: 8px;                /* Adds 8px space between checkbox and text */
+    cursor: pointer;         /* Changes cursor to pointer on hover */
+    font-weight: 400;        /* Sets text to normal weight */
 }
 
+{# CSS rule: Styles checkbox inputs with specific dimensions and pointer cursor #}
 .checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
+    width: 18px;             /* Sets checkbox width to 18px */
+    height: 18px;            /* Sets checkbox height to 18px */
+    cursor: pointer;         /* Changes cursor to pointer on hover */
 }
 
+{# CSS rule: Styles the generate button with padding, blue background, white text, rounded corners, and flex layout #}
 .generate-btn {
-    padding: 14px 24px;
-    background: #1a56db;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.2s;
+    padding: 14px 24px;      /* Adds 14px vertical and 24px horizontal padding */
+    background: #1a56db;     /* Sets background to blue */
+    color: white;             /* Sets text color to white */
+    border: none;             /* Removes default border */
+    border-radius: 8px;       /* Rounds corners by 8px */
+    font-size: 16px;          /* Sets font size to 16 pixels */
+    font-weight: 600;         /* Makes text semi-bold */
+    cursor: pointer;          /* Changes cursor to pointer on hover */
+    display: flex;            /* Enables flexbox for icon/text alignment */
+    align-items: center;      /* Centers content vertically */
+    justify-content: center;  /* Centers content horizontally */
+    gap: 8px;                 /* Adds 8px space between icon and text */
+    transition: all 0.2s;    /* Smooth transition for hover effects */
 }
 
+{# CSS rule: Styles the generate button hover state with darker blue, slight lift, and shadow #}
 .generate-btn:hover {
-    background: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+    background: #2563eb;                              /* Changes to darker blue */
+    transform: translateY(-1px);                     /* Lifts button 1px up */
+    box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3); /* Adds blue shadow */
 }
 
+{# CSS rule: Styles the result container with top margin, top padding, and top border separator #}
 .result-container {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid #e5e7eb;
+    margin-top: 32px;         /* Adds 32px space above */
+    padding-top: 24px;        /* Adds 24px padding at top */
+    border-top: 1px solid #e5e7eb; /* Adds light gray top border */
 }
 
+{# CSS rule: Styles the result header as a horizontal flex container with space-between alignment #}
 .result-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+    display: flex;             /* Enables flexbox layout */
+    justify-content: space-between; /* Pushes title left and button right */
+    align-items: center;       /* Centers items vertically */
+    margin-bottom: 16px;      /* Adds 16px space below */
 }
 
+{# CSS rule: Styles result header headings with medium font, bold weight, and dark color #}
 .result-header h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #111827;
+    font-size: 18px;          /* Sets font size to 18 pixels */
+    font-weight: 600;         /* Makes text semi-bold */
+    color: #111827;           /* Sets text color to near-black */
 }
 
+{# CSS rule: Styles the copy button with padding, light gray background, dark text, rounded corners, and flex layout #}
 .copy-btn {
-    padding: 8px 16px;
-    background: #f3f4f6;
-    color: #111827;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
+    padding: 8px 16px;        /* Adds 8px vertical and 16px horizontal padding */
+    background: #f3f4f6;      /* Sets background to light gray */
+    color: #111827;           /* Sets text color to dark */
+    border: none;             /* Removes default border */
+    border-radius: 6px;       /* Rounds corners by 6px */
+    font-size: 14px;          /* Sets font size to 14 pixels */
+    font-weight: 600;         /* Makes text semi-bold */
+    cursor: pointer;          /* Changes cursor to pointer on hover */
+    display: flex;            /* Enables flexbox for icon/text alignment */
+    align-items: center;      /* Centers content vertically */
+    gap: 6px;                 /* Adds 6px space between icon and text */
+    transition: all 0.2s;     /* Smooth transition for hover effects */
 }
 
+{# CSS rule: Styles the copy button hover state with darker gray background #}
 .copy-btn:hover {
-    background: #e5e7eb;
+    background: #e5e7eb;  /* Changes to slightly darker gray */
 }
 
+{# CSS rule: Styles the passcode display container with light background, border, rounded corners, and padding #}
 .passcode-display {
-    background: #f8fafc;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 12px;
+    background: #f8fafc;      /* Sets background to very light gray */
+    border: 2px solid #e5e7eb; /* Adds 2px light gray border */
+    border-radius: 8px;       /* Rounds corners by 8px */
+    padding: 20px;            /* Adds 20px padding inside */
+    margin-bottom: 12px;      /* Adds 12px space below */
 }
 
+{# CSS rule: Styles the passcode code element with large monospace font, bold weight, blue color, letter spacing, and word breaking #}
 .passcode-display code {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1a56db;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 2px;
-    word-break: break-all;
+    font-size: 24px;           /* Sets font size to 24 pixels */
+    font-weight: 600;          /* Makes text semi-bold */
+    color: #1a56db;            /* Sets text color to blue */
+    font-family: 'Courier New', monospace; /* Uses monospace font */
+    letter-spacing: 2px;       /* Adds 2px space between letters */
+    word-break: break-all;     /* Allows breaking long passcodes */
 }
 
+{# CSS rule: Styles the passcode info container with small font, gray color, and center alignment #}
 .passcode-info {
-    font-size: 12px;
-    color: #6b7280;
-    text-align: center;
+    font-size: 12px;           /* Sets font size to 12 pixels */
+    color: #6b7280;            /* Sets text color to medium gray */
+    text-align: center;         /* Centers text horizontally */
 }
 
+{# CSS rule: Styles the tips list container by removing default list styling #}
 .tips-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    list-style: none;           /* Removes default bullet points */
+    padding: 0;                 /* Removes default padding */
+    margin: 0;                  /* Removes default margin */
 }
 
+{# CSS rule: Styles each tip list item with padding, relative positioning, small font, gray color, and increased line height #}
 .tips-list li {
-    padding: 12px 0;
-    padding-left: 24px;
-    position: relative;
-    font-size: 14px;
-    color: #374151;
-    line-height: 1.6;
+    padding: 12px 0;            /* Adds 12px vertical padding */
+    padding-left: 24px;         /* Adds 24px left padding for checkmark space */
+    position: relative;         /* Enables absolute positioning for pseudo-element */
+    font-size: 14px;            /* Sets font size to 14 pixels */
+    color: #374151;             /* Sets text color to dark gray */
+    line-height: 1.6;           /* Increases line spacing for readability */
 }
 
+{# CSS rule: Styles the checkmark pseudo-element before each tip list item #}
 .tips-list li:before {
-    content: "✓";
-    position: absolute;
-    left: 0;
-    color: #0d9b68;
-    font-weight: 600;
+    content: "✓";               /* Inserts checkmark character */
+    position: absolute;          /* Positions checkmark absolutely */
+    left: 0;                     /* Aligns checkmark to left edge */
+    color: #0d9b68;             /* Sets checkmark color to green */
+    font-weight: 600;            /* Makes checkmark bold */
 }
 </style>
 
+{# HTML script tag: Begins embedded JavaScript for page functionality #}
 <script>
+{# JavaScript function: Updates the length display span when slider value changes #}
 function updateLengthDisplay(value) {
+    {# Gets the lengthDisplay element and sets its text content to the slider value #}
     document.getElementById('lengthDisplay').textContent = value;
 }
 
+{# JavaScript function: Generates a passcode by sending a POST request to the backend API #}
 function generatePasscode() {
+    {# Gets the passcode length value from the range input and converts it to an integer #}
     const length = parseInt(document.getElementById('passcodeLength').value);
+    {# Gets the checkbox state (true if checked, false if unchecked) for including symbols #}
     const includeSymbols = document.getElementById('includeSymbols').checked;
     
+    {# Sends a POST request to the /api/generate-passcode endpoint using Fetch API #}
     fetch('/api/generate-passcode', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+        method: 'POST',         /* HTTP method is POST */
+        headers: {              /* Sets request headers */
+            'Content-Type': 'application/json', /* Indicates JSON payload */
         },
-        body: JSON.stringify({
-            length: length,
-            include_symbols: includeSymbols
+        body: JSON.stringify({  /* Converts JavaScript object to JSON string */
+            length: length,                      /* Passes the selected length */
+            include_symbols: includeSymbols     /* Passes the symbols option */
         })
     })
+    {# Promise handler: Converts response to JSON format #}
     .then(response => response.json())
+    {# Promise handler: Processes the JSON data returned from the server #}
     .then(data => {
+        {# Conditional: Checks if the API request was successful #}
         if (data.success) {
+            {# Sets the generated passcode text in the code element #}
             document.getElementById('generatedPasscode').textContent = data.passcode;
+            {# Sets the passcode length info text showing character count #}
             document.getElementById('passcodeLengthInfo').textContent = `${data.length} characters`;
             
+            {# Creates a Date object from the timestamp returned by the server #}
             const timestamp = new Date(data.timestamp);
+            {# Sets the timestamp display text with formatted time #}
             document.getElementById('passcodeTimestamp').textContent = 
                 `Generated at ${timestamp.toLocaleTimeString()}`;
             
+            {# Makes the result container visible by changing display from none to block #}
             document.getElementById('resultContainer').style.display = 'block';
         } else {
+            {# Shows an error alert if the API request failed #}
             alert('Error generating passcode: ' + (data.error || 'Unknown error'));
         }
     })
+    {# Promise catch handler: Catches and displays any network or parsing errors #}
     .catch(error => {
+        {# Shows an error alert with the error message #}
         alert('Error: ' + error);
     });
 }
 
+{# JavaScript function: Copies the generated passcode to the clipboard #}
 function copyPasscode() {
+    {# Gets the generated passcode text from the code element #}
     const passcode = document.getElementById('generatedPasscode').textContent;
+    {# Uses Clipboard API to write the passcode text to clipboard #}
     navigator.clipboard.writeText(passcode).then(() => {
+        {# Finds the closest copy button element from the event target #}
         const btn = event.target.closest('.copy-btn');
+        {# Stores the original button HTML content #}
         const originalText = btn.innerHTML;
+        {# Temporarily changes button content to show "Copied!" with checkmark icon #}
         btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Copied!';
+        {# Sets a timeout to restore the original button content after 2 seconds #}
         setTimeout(() => {
+            {# Restores the original button HTML content #}
             btn.innerHTML = originalText;
         }, 2000);
     });
 }
 </script>
+{# Jinja2 template directive: Closes the content block #}
 {% endblock %}
 

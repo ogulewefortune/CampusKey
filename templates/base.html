@@ -1,191 +1,332 @@
+{# HTML5 document type declaration: Tells browser this is an HTML5 document #}
 <!DOCTYPE html>
+{# HTML root element: Contains all HTML content, lang attribute sets language to English #}
 <html lang="en">
+{# HTML head section: Contains metadata and links to external resources #}
 <head>
+    {# Meta charset tag: Sets character encoding to UTF-8 for proper text display #}
     <meta charset="UTF-8">
+    {# Meta viewport tag: Sets responsive viewport settings for mobile devices #}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {# Page title: Displays "CAMPUSKEY - Secure Access" in browser tab #}
     <title>CAMPUSKEY - Secure Access</title>
+    {# CSS link: Links to external stylesheet using Flask's url_for to generate correct path #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+{# HTML body section: Contains all visible page content #}
 <body>
+    {# Jinja2 conditional: Only shows header/sidebar if user is authenticated AND not on login page #}
     {% if current_user.is_authenticated and request.endpoint != 'login' %}
+    {# HTML comment: Marks the start of the top header bar section #}
     <!-- Top Header Bar -->
+    {# HTML header element: Fixed top navigation bar with logo and user info #}
     <header class="top-header">
+        {# Header left section: Contains logo and site title #}
         <div class="header-left">
+            {# Logo container: Square div containing SVG logo icon #}
             <div class="logo-square">
+                {# SVG element: Scalable vector graphic for the key logo icon, 24x24 viewport #}
                 <svg width="24" height="24" viewBox="0 0 80 80">
+                    {# SVG path: Draws the key shape outline in white color #}
                     <path d="M45 20 L55 20 L55 30 L50 35 L55 40 L55 50 L50 55 L40 55 L35 50 L30 50 L25 55 L15 55 L10 50 L10 40 L20 30 L20 25 L25 20 Z" fill="white"/>
+                    {# SVG circle: Draws the keyhole circle in purple color #}
                     <circle cx="30" cy="40" r="8" fill="#667eea"/>
+                    {# SVG rectangle: Draws the keyhole slot in purple color #}
                     <rect x="28" y="35" width="4" height="10" fill="#667eea"/>
                 </svg>
             </div>
+            {# Site title span: Displays "CAMPUSKEY" text next to logo #}
             <span class="header-title">CAMPUSKEY</span>
         </div>
+        {# Header center section: Reserved for future search bar or other content #}
         <div class="header-center">
+            {# HTML comment: Placeholder for future center content #}
             <!-- Empty center for now -->
         </div>
+        {# Header right section: Contains user avatar and profile info #}
         <div class="header-right">
+            {# User avatar div: Circular div showing first letter of username in uppercase #}
             <div class="user-avatar">
+                {# Jinja2 expression: Gets first character of username and converts to uppercase #}
                 {{ current_user.username[0].upper() }}
             </div>
         </div>
     </header>
 
+    {# HTML comment: Marks the start of the main application layout #}
     <!-- Main Layout -->
+    {# App layout container: Flex container holding sidebar and main content #}
     <div class="app-layout">
+        {# HTML comment: Marks the start of the left sidebar navigation #}
         <!-- Left Sidebar -->
+        {# HTML aside element: Sidebar navigation menu on the left side #}
         <aside class="sidebar">
+            {# Navigation element: Contains all navigation links #}
             <nav class="sidebar-nav">
+                {# Dashboard link: Dynamic link that changes based on user role (admin/professor/student) #}
                 <a href="{% if current_user.role == 'admin' %}{{ url_for('admin_dashboard') }}{% elif current_user.role == 'professor' %}{{ url_for('professor_dashboard') }}{% else %}{{ url_for('student_dashboard') }}{% endif %}" class="nav-item {% if 'dashboard' in request.endpoint %}active{% endif %}">
+                    {# SVG home icon: House icon representing dashboard/home #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws the roof and walls of the house #}
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        {# SVG polyline: Draws the door opening in the house #}
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
                     </svg>
+                    {# Link text: "Dashboard" label for the navigation item #}
                     <span>Dashboard</span>
                 </a>
                 
+                {# Jinja2 conditional: Shows admin-only navigation items if user is admin with username 'admin' #}
                 {% if current_user.role == 'admin' and current_user.username == 'admin' %}
+                {# Admin user management link: Link to manage all users in the system #}
                 <a href="{{ url_for('admin') }}" class="nav-item {% if request.endpoint == 'admin' %}active{% endif %}">
+                    {# SVG users icon: Multiple people icon representing user management #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws first person silhouette #}
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        {# SVG circle: Draws head of first person #}
                         <circle cx="9" cy="7" r="4"></circle>
+                        {# SVG path: Draws second person silhouette #}
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        {# SVG path: Draws third person silhouette #}
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
+                    {# Link text: "Manage Users" label #}
                     <span>Manage Users</span>
                 </a>
+                {# Admin grades link: Link to view all grades in the system #}
                 <a href="{{ url_for('admin_grades') }}" class="nav-item {% if request.endpoint == 'admin_grades' %}active{% endif %}">
+                    {# SVG document icon: File/document icon representing grades #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws document outline #}
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        {# SVG polyline: Draws folded corner of document #}
                         <polyline points="14 2 14 8 20 8"></polyline>
+                        {# SVG line: Draws first horizontal line in document (representing text) #}
                         <line x1="16" y1="13" x2="8" y2="13"></line>
+                        {# SVG line: Draws second horizontal line in document #}
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                     </svg>
+                    {# Link text: "Grades" label #}
                     <span>Grades</span>
                 </a>
+                {# Admin login logs link: Link to view all login attempts in the system #}
                 <a href="{{ url_for('login_logs') }}" class="nav-item {% if request.endpoint == 'login_logs' %}active{% endif %}">
+                    {# SVG clock icon: Clock icon representing time/logs #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG circle: Draws clock face #}
                         <circle cx="12" cy="12" r="10"></circle>
+                        {# SVG polyline: Draws clock hands showing time #}
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
+                    {# Link text: "Login Logs" label #}
                     <span>Login Logs</span>
                 </a>
+                {# Jinja2 elif: Shows professor-only navigation items if user is professor #}
                 {% elif current_user.role == 'professor' %}
+                {# Professor courses link: Link to view and manage professor's courses #}
                 <a href="{{ url_for('professor_courses') }}" class="nav-item {% if request.endpoint == 'professor_courses' %}active{% endif %}">
+                    {# SVG book icon: Book icon representing courses #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws book binding/spine #}
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        {# SVG path: Draws book pages #}
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                     </svg>
+                    {# Link text: "My Courses" label #}
                     <span>My Courses</span>
                 </a>
+                {# Professor give grades link: Link to assign grades to students #}
                 <a href="{{ url_for('give_grades') }}" class="nav-item {% if request.endpoint == 'give_grades' %}active{% endif %}">
+                    {# SVG document icon: File icon representing grade entry #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws document outline #}
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        {# SVG polyline: Draws folded corner #}
                         <polyline points="14 2 14 8 20 8"></polyline>
+                        {# SVG line: Draws first text line #}
                         <line x1="16" y1="13" x2="8" y2="13"></line>
+                        {# SVG line: Draws second text line #}
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                     </svg>
+                    {# Link text: "Give Grades" label #}
                     <span>Give Grades</span>
                 </a>
+                {# Jinja2 elif: Shows student-only navigation items if user is student #}
                 {% elif current_user.role == 'student' %}
+                {# Student grades link: Link to view student's own grades #}
                 <a href="{{ url_for('student_grades') }}" class="nav-item {% if request.endpoint == 'student_grades' %}active{% endif %}">
+                    {# SVG document icon: File icon representing grades #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws document outline #}
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        {# SVG polyline: Draws folded corner #}
                         <polyline points="14 2 14 8 20 8"></polyline>
+                        {# SVG line: Draws first text line #}
                         <line x1="16" y1="13" x2="8" y2="13"></line>
+                        {# SVG line: Draws second text line #}
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                     </svg>
+                    {# Link text: "My Grades" label #}
                     <span>My Grades</span>
                 </a>
+                {# Student courses link: Link to view student's enrolled courses #}
                 <a href="{{ url_for('student_courses') }}" class="nav-item {% if request.endpoint == 'student_courses' %}active{% endif %}">
+                    {# SVG book icon: Book icon representing courses #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws book binding #}
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        {# SVG path: Draws book pages #}
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                     </svg>
+                    {# Link text: "My Courses" label #}
                     <span>My Courses</span>
                 </a>
+                {# Jinja2 endif: Closes the role-based conditional block #}
                 {% endif %}
                 
+                {# Navigation divider: Visual separator between role-specific and common items #}
                 <div class="nav-divider"></div>
                 
+                {# HTML comment: Marks common security items available to all roles #}
                 <!-- Common Security Items for All Roles -->
+                {# Report issue link: Link to report security issues, available to all users #}
                 <a href="{{ url_for('report_issue') }}" class="nav-item {% if request.endpoint == 'report_issue' %}active{% endif %}">
+                    {# SVG alert icon: Document with plus sign representing issue reporting #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws document outline #}
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        {# SVG polyline: Draws folded corner #}
                         <polyline points="14 2 14 8 20 8"></polyline>
+                        {# SVG line: Draws horizontal line (plus sign horizontal) #}
                         <line x1="9" y1="15" x2="15" y2="15"></line>
+                        {# SVG line: Draws vertical line (plus sign vertical) #}
                         <line x1="12" y1="12" x2="12" y2="18"></line>
                     </svg>
+                    {# Link text: "Report an Issue" label #}
                     <span>Report an Issue</span>
                 </a>
+                {# Security guidelines link: Link to view security best practices #}
                 <a href="{{ url_for('security_guidelines') }}" class="nav-item {% if request.endpoint == 'security_guidelines' %}active{% endif %}">
+                    {# SVG book icon: Book icon representing guidelines/documentation #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws book binding #}
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        {# SVG path: Draws book pages #}
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                     </svg>
+                    {# Link text: "Security Guidelines" label #}
                     <span>Security Guidelines</span>
                 </a>
+                {# Recent activity link: Link to view recent account activity #}
                 <a href="{{ url_for('recent_activity') }}" class="nav-item {% if request.endpoint == 'recent_activity' %}active{% endif %}">
+                    {# SVG bell icon: Bell icon representing notifications/activity #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws bell shape #}
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        {# SVG path: Draws bell clapper #}
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                     </svg>
+                    {# Link text: "Recent Activity" label #}
                     <span>Recent Activity</span>
                 </a>
+                {# Device security link: Link to manage trusted devices #}
                 <a href="{{ url_for('device_security') }}" class="nav-item {% if request.endpoint == 'device_security' %}active{% endif %}">
+                    {# SVG smartphone icon: Mobile device icon representing device management #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG rectangle: Draws phone body #}
                         <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        {# SVG line: Draws home button indicator #}
                         <line x1="12" y1="18" x2="12.01" y2="18"></line>
                     </svg>
+                    {# Link text: "Device Security" label #}
                     <span>Device Security</span>
                 </a>
+                {# Account protection link: Link to view account protection status #}
                 <a href="{{ url_for('account_protection') }}" class="nav-item {% if request.endpoint == 'account_protection' %}active{% endif %}">
+                    {# SVG shield icon: Shield with checkmark representing account protection #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws shield shape #}
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        {# SVG polyline: Draws checkmark inside shield #}
                         <polyline points="9 12 11 14 15 10"></polyline>
                     </svg>
+                    {# Link text: "Account Protection Level" label #}
                     <span>Account Protection Level</span>
                 </a>
+                {# Access history link: Link to view login history and active sessions #}
                 <a href="{{ url_for('access_history') }}" class="nav-item {% if request.endpoint == 'access_history' %}active{% endif %}">
+                    {# SVG clock icon: Clock icon representing access history/time logs #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG circle: Draws clock face #}
                         <circle cx="12" cy="12" r="10"></circle>
+                        {# SVG polyline: Draws clock hands #}
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
+                    {# Link text: "View Access History" label #}
                     <span>View Access History</span>
                 </a>
+                {# Generate code link: Link to generate secure access codes #}
                 <a href="{{ url_for('generate_code') }}" class="nav-item {% if request.endpoint == 'generate_code' %}active{% endif %}">
+                    {# SVG grid icon: Four squares icon representing code generation #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG rectangle: Top-left square #}
                         <rect x="3" y="3" width="5" height="5"></rect>
+                        {# SVG rectangle: Bottom-left square #}
                         <rect x="3" y="16" width="5" height="5"></rect>
+                        {# SVG rectangle: Top-right square #}
                         <rect x="16" y="3" width="5" height="5"></rect>
+                        {# SVG rectangle: Bottom-right square #}
                         <rect x="16" y="16" width="5" height="5"></rect>
+                        {# SVG line: Dot indicator top-left #}
                         <line x1="8" y1="8" x2="8" y2="8"></line>
+                        {# SVG line: Dot indicator top-right #}
                         <line x1="16" y1="8" x2="16" y2="8"></line>
+                        {# SVG line: Dot indicator bottom-left #}
                         <line x1="8" y1="16" x2="8" y2="16"></line>
+                        {# SVG line: Dot indicator bottom-right #}
                         <line x1="16" y1="16" x2="16" y2="16"></line>
                     </svg>
+                    {# Link text: "Generate Access Code" label #}
                     <span>Generate Access Code</span>
                 </a>
+                {# Navigation divider: Visual separator before logout button #}
                 <div class="nav-divider"></div>
+                {# Logout link: Link to log out of the application #}
                 <a href="{{ url_for('logout') }}" class="nav-item">
+                    {# SVG logout icon: Arrow pointing right representing logout #}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws door frame #}
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        {# SVG polyline: Draws arrow pointing right #}
                         <polyline points="16 17 21 12 16 7"></polyline>
+                        {# SVG line: Draws horizontal line of arrow #}
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
+                    {# Link text: "Logout" label #}
                     <span>Logout</span>
                 </a>
             </nav>
         </aside>
 
+        {# HTML comment: Marks the start of the main content area #}
         <!-- Main Content -->
+        {# HTML main element: Main content area where page-specific content is displayed #}
         <main class="main-content">
+    {# Jinja2 endif: Closes the conditional block for authenticated users #}
     {% endif %}
     
+    {# Jinja2 block: Placeholder where child templates insert their content #}
     {% block content %}{% endblock %}
     
+    {# Jinja2 conditional: Closes main and app-layout divs if user is authenticated and not on login page #}
     {% if current_user.is_authenticated and request.endpoint != 'login' %}
+        {# Closing main tag: Closes the main content area #}
         </main>
+    {# Closing div tag: Closes the app-layout container #}
     </div>
+    {# Jinja2 endif: Closes the conditional block #}
     {% endif %}
 
+    {# Script tag: Links to external JavaScript file using Flask's url_for #}
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>

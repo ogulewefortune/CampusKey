@@ -1,92 +1,154 @@
+{# Jinja2 template directive: Extends base.html template to inherit layout and styling #}
 {% extends "base.html" %}
 
+{# Jinja2 template directive: Defines the content block that will be inserted into base.html #}
 {% block content %}
+{# Main login container: Flex container that splits page into form section and image section #}
 <div class="campuskey-login-container">
+    {# HTML comment: Marks the left side containing the login form #}
     <!-- Left Side: Login Form -->
+    {# Login form section: Left side container (33% width) with white background #}
     <div class="login-form-section">
+        {# Login form content wrapper: Centers content and sets max width #}
         <div class="login-form-content">
+            {# HTML comment: Marks the CAMPUSKEY logo section #}
             <!-- CAMPUSKEY Logo -->
+            {# Logo container: Centers the SVG logo on the page #}
             <div class="campuskey-logo">
+                {# SVG element: Large 80x80 key logo with gradient fill #}
                 <svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                    {# SVG defs section: Defines reusable gradient for key fill #}
                     <defs>
+                        {# Linear gradient definition: Creates purple gradient from top-left to bottom-right #}
                         <linearGradient id="keyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            {# Gradient stop 1: Light purple color at start (0%) #}
                             <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                            {# Gradient stop 2: Dark purple color at end (100%) #}
                             <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
                         </linearGradient>
                     </defs>
+                    {# HTML comment: Marks the key shape path #}
                     <!-- Key shape -->
+                    {# SVG path: Draws the main key outline using gradient fill and dark stroke #}
                     <path d="M45 20 L55 20 L55 30 L50 35 L55 40 L55 50 L50 55 L40 55 L35 50 L30 50 L25 55 L15 55 L10 50 L10 40 L20 30 L20 25 L25 20 Z" fill="url(#keyGrad)" stroke="#333" stroke-width="1.5"/>
+                    {# HTML comment: Marks the keyhole section #}
                     <!-- Key hole -->
+                    {# SVG circle: Draws white circle for keyhole center #}
                     <circle cx="30" cy="40" r="8" fill="white"/>
+                    {# SVG rectangle: Draws white rectangle for keyhole slot #}
                     <rect x="28" y="35" width="4" height="10" fill="white"/>
+                    {# HTML comment: Marks the key teeth section #}
                     <!-- Key teeth -->
+                    {# SVG rectangle: Draws first white rounded rectangle for key tooth #}
                     <rect x="45" y="25" width="8" height="3" fill="white" rx="1"/>
+                    {# SVG rectangle: Draws second white rounded rectangle for key tooth #}
                     <rect x="48" y="32" width="6" height="3" fill="white" rx="1"/>
                 </svg>
             </div>
             
+            {# Main heading: Displays "🔑 CAMPUSKEY" with key emoji and gradient text #}
             <h1 class="campuskey-title">🔑 CAMPUSKEY</h1>
             
+            {# Jinja2 conditional: Displays error message if error variable exists #}
             {% if error %}
+            {# Error message div: Red background container for error alerts #}
             <div class="error-message">{{ error }}</div>
+            {# Jinja2 endif: Closes error conditional block #}
             {% endif %}
 
+            {# Jinja2 conditional: Displays success message if success_message variable exists #}
             {% if success_message %}
+            {# Success message div: Green background container for success alerts #}
             <div class="success-message">{{ success_message }}</div>
+            {# Jinja2 endif: Closes success message conditional block #}
             {% endif %}
 
+            {# HTML form element: POST form for submitting login credentials #}
             <form method="POST" class="campuskey-login-form" id="loginForm">
+                {# Form group 1: Username input field container #}
                 <div class="form-group">
+                    {# Label for username: Text label with asterisk indicating required field #}
                     <label for="username">Username*</label>
+                    {# Username input: Text input field for username, required attribute prevents empty submission #}
                     <input type="text" id="username" name="username" required>
                 </div>
                 
+                {# Form group 2: Email input field container #}
                 <div class="form-group">
+                    {# Label for email: Text label with asterisk indicating required field #}
                     <label for="email">Email Address*</label>
+                    {# Email input group: Flex container for email input and send code button #}
                     <div class="email-input-group">
+                        {# Email input: Email type input with placeholder text and required validation #}
                         <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+                        {# Send code button: Button that triggers sendEmailCode() function to send verification code #}
                         <button type="button" id="sendCodeBtn" class="btn-send-code" onclick="sendEmailCode()">Send Code</button>
                     </div>
                 </div>
 
+                {# Form group 3: OTP verification code input container #}
                 <div class="form-group">
+                    {# Label for OTP code: Text label with asterisk indicating required field #}
                     <label for="otp_code">Verification Code*</label>
+                    {# OTP code input: Text input for 6-digit verification code with placeholder #}
                     <input type="text" id="otp_code" name="otp_code" placeholder="6-digit code" required>
+                    {# Hint text: Small text providing instructions about the code #}
                     <small id="codeHint">Enter the code sent to your email</small>
                 </div>
 
+                {# Form links section: Container for additional links like forgot password #}
                 <div class="form-links">
+                    {# Forgot password link: Placeholder link for password recovery (currently points to #) #}
                     <a href="#" class="forgot-password">Forgot my password</a>
                 </div>
 
+                {# Submit button: Primary login button that submits the form #}
                 <button type="submit" class="btn-login">LOGIN</button>
 
+                {# MFA link section: Container for multi-factor authentication information link #}
                 <div class="mfa-link">
+                    {# MFA link: Placeholder link for MFA information (currently points to #) #}
                     <a href="#">Protect your account with MFA. Learn more here.</a>
                 </div>
             </form>
 
+            {# HTML comment: Marks alternative authentication methods section #}
             <!-- Alternative Authentication Methods -->
+            {# Alternative auth section: Container for biometric and RFID login options #}
             <div class="alt-auth-section">
+                {# Auth divider: Visual separator with "or sign in with" text #}
                 <div class="alt-auth-divider">
+                    {# Divider text: Text displayed between form and alternative auth buttons #}
                     <span>or sign in with</span>
                 </div>
                 
+                {# Alternative auth buttons container: Flex container for biometric and RFID buttons #}
                 <div class="alt-auth-buttons">
+                    {# Biometric button: Button for face recognition authentication #}
                     <button type="button" class="btn-alt-auth btn-biometric" onclick="simulateBiometric()">
+                        {# SVG user icon: Person icon representing biometric/face recognition #}
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            {# SVG path: Draws person silhouette with head and body #}
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
                         </svg>
+                        {# Button text: "Face Recognition" label #}
                         Face Recognition
                     </button>
                     
+                    {# RFID button: Button for RFID card authentication #}
                     <button type="button" class="btn-alt-auth btn-rfid" onclick="simulateRFID()">
+                        {# SVG card icon: ID card icon representing RFID card #}
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            {# SVG rectangle: Draws card outline #}
                             <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
+                            {# SVG line: Draws first horizontal line on card (representing text) #}
                             <line x1="7" y1="8" x2="17" y2="8"/>
+                            {# SVG line: Draws second horizontal line on card #}
                             <line x1="7" y1="12" x2="17" y2="12"/>
+                            {# SVG line: Draws third horizontal line on card (shorter) #}
                             <line x1="7" y1="16" x2="12" y2="16"/>
                         </svg>
+                        {# Button text: "RFID Card" label #}
                         RFID Card
                     </button>
                 </div>
@@ -94,120 +156,176 @@
         </div>
     </div>
 
+    {# HTML comment: Marks the right side containing the scenic image #}
     <!-- Right Side: Scenic Image -->
+    {# Login image section: Right side container (66% width) with gradient background #}
     <div class="login-image-section">
+        {# Scenic image div: Container with background image of scenic landscape #}
         <div class="scenic-image"></div>
     </div>
 </div>
 
+{# HTML script tag: Begins embedded JavaScript for login form functionality #}
 <script>
+{# JavaScript function: Sends email verification code to user's email address #}
 function sendEmailCode() {
+    {# JavaScript variable: Gets username value from username input field #}
     const username = document.getElementById('username').value;
+    {# JavaScript variable: Gets email value from email input field #}
     const email = document.getElementById('email').value;
     
+    {# JavaScript conditional: Validates that username is not empty #}
     if (!username) {
+        {# JavaScript alert: Shows error if username is missing #}
         alert('Please enter your username first');
+        {# JavaScript return: Exits function early if validation fails #}
         return;
     }
     
+    {# JavaScript conditional: Validates that email is not empty #}
     if (!email) {
+        {# JavaScript alert: Shows error if email is missing #}
         alert('Please enter your email address');
+        {# JavaScript return: Exits function early if validation fails #}
         return;
     }
     
+    {# JavaScript variable: Gets reference to the send code button element #}
     const btn = document.getElementById('sendCodeBtn');
+    {# JavaScript property: Disables button to prevent multiple clicks #}
     btn.disabled = true;
+    {# JavaScript property: Changes button text to show loading state #}
     btn.textContent = 'Sending...';
     
+    {# JavaScript fetch: Sends POST request to API endpoint to send email code #}
     fetch('/api/send-email-code', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+        method: 'POST',         /* HTTP method is POST */
+        headers: {              /* Sets request headers */
+            'Content-Type': 'application/json', /* Indicates JSON payload */
         },
-        body: JSON.stringify({
-            username: username,
-            email: email
+        body: JSON.stringify({  /* Converts JavaScript object to JSON string */
+            username: username,  /* Includes username in request */
+            email: email         /* Includes email in request */
         })
     })
+    {# Promise handler: Converts response to JSON format #}
     .then(response => response.json())
+    {# Promise handler: Processes the JSON data returned from server #}
     .then(data => {
+        {# JavaScript conditional: Checks if API request was successful #}
         if (data.success) {
+            {# JavaScript alert: Shows success message with email address #}
             alert('Verification code sent to ' + email + '\n\nCheck your email or terminal for the code.');
+            {# JavaScript DOM: Updates hint text to confirm code was sent #}
             document.getElementById('codeHint').textContent = 'Code sent! Check your email or terminal.';
         } else {
+            {# JavaScript alert: Shows error message if request failed #}
             alert('Error: ' + (data.error || 'Failed to send code'));
         }
     })
+    {# Promise catch: Handles network errors or other exceptions #}
     .catch(error => {
+        {# JavaScript alert: Shows error message if fetch fails #}
         alert('Error sending code: ' + error);
     })
+    {# Promise finally: Executes code regardless of success or failure #}
     .finally(() => {
+        {# JavaScript property: Re-enables button after request completes #}
         btn.disabled = false;
+        {# JavaScript property: Restores original button text #}
         btn.textContent = 'Send Code';
     });
 }
 
+{# JavaScript function: Simulates biometric authentication (face recognition) #}
 function simulateBiometric() {
+    {# JavaScript variable: Gets username value from username input field #}
     const username = document.getElementById('username').value;
     
+    {# JavaScript conditional: Validates that username is not empty #}
     if (!username) {
+        {# JavaScript alert: Shows error if username is missing #}
         alert('Please enter your username first');
+        {# JavaScript return: Exits function early if validation fails #}
         return;
     }
     
+    {# JavaScript fetch: Sends POST request to biometric login API endpoint #}
     fetch('/api/biometric-login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+        method: 'POST',         /* HTTP method is POST */
+        headers: {              /* Sets request headers */
+            'Content-Type': 'application/json', /* Indicates JSON payload */
         },
-        body: JSON.stringify({
-            username: username
+        body: JSON.stringify({  /* Converts JavaScript object to JSON string */
+            username: username  /* Includes username in request */
         })
     })
+    {# Promise handler: Converts response to JSON format #}
     .then(response => response.json())
+    {# Promise handler: Processes the JSON data returned from server #}
     .then(data => {
+        {# JavaScript conditional: Checks if biometric authentication was successful #}
         if (data.success) {
+            {# JavaScript alert: Shows success message #}
             alert('Biometric authentication successful!\n\nRedirecting to dashboard...');
+            {# JavaScript window.location: Redirects browser to dashboard page #}
             window.location.href = '/dashboard';
         } else {
+            {# JavaScript alert: Shows error message if authentication failed #}
             alert('Error: ' + (data.error || 'Biometric authentication failed'));
         }
     })
+    {# Promise catch: Handles network errors or other exceptions #}
     .catch(error => {
+        {# JavaScript alert: Shows error message if fetch fails #}
         alert('Error: ' + error);
     });
 }
 
+{# JavaScript function: Simulates RFID card authentication #}
 function simulateRFID() {
+    {# JavaScript variable: Gets username value from username input field #}
     const username = document.getElementById('username').value;
     
+    {# JavaScript conditional: Validates that username is not empty #}
     if (!username) {
+        {# JavaScript alert: Shows error if username is missing #}
         alert('Please enter your username first');
+        {# JavaScript return: Exits function early if validation fails #}
         return;
     }
     
+    {# JavaScript fetch: Sends POST request to RFID login API endpoint #}
     fetch('/api/rfid-login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+        method: 'POST',         /* HTTP method is POST */
+        headers: {              /* Sets request headers */
+            'Content-Type': 'application/json', /* Indicates JSON payload */
         },
-        body: JSON.stringify({
-            username: username
+        body: JSON.stringify({  /* Converts JavaScript object to JSON string */
+            username: username  /* Includes username in request */
         })
     })
+    {# Promise handler: Converts response to JSON format #}
     .then(response => response.json())
+    {# Promise handler: Processes the JSON data returned from server #}
     .then(data => {
+        {# JavaScript conditional: Checks if RFID authentication was successful #}
         if (data.success) {
+            {# JavaScript alert: Shows success message #}
             alert('RFID card authentication successful!\n\nRedirecting to dashboard...');
+            {# JavaScript window.location: Redirects browser to dashboard page #}
             window.location.href = '/dashboard';
         } else {
+            {# JavaScript alert: Shows error message if authentication failed #}
             alert('Error: ' + (data.error || 'RFID authentication failed'));
         }
     })
+    {# Promise catch: Handles network errors or other exceptions #}
     .catch(error => {
+        {# JavaScript alert: Shows error message if fetch fails #}
         alert('Error: ' + error);
     });
 }
 </script>
+{# Jinja2 template directive: Closes the content block #}
 {% endblock %}
-
