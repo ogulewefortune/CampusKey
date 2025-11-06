@@ -23,12 +23,12 @@ with app.app_context():
             role='student'  # Change to 'admin' or 'professor' if needed
         )
         db.session.add(user)
-        print(f"✅ Created new user: {username}")
+        print(f" Created new user: {username}")
     else:
         # Update existing user
         user.email = email
         user.phone_number = phone_number
-        print(f"✅ Updated user: {username}")
+        print(f" Updated user: {username}")
     
     db.session.commit()
     
@@ -37,7 +37,7 @@ with app.app_context():
     print(f"  Email: {user.email}")
     print(f"  Phone: {user.phone_number}")
     print(f"  Role: {user.role}")
-    print(f"\n🎉 You can now use this account to log in!")
+    print(f"\n You can now use this account to log in!")
     print(f"\nTo get SMS codes:")
     print(f"  1. Go to http://localhost:5001")
     print(f"  2. Enter username: {username}")

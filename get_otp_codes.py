@@ -9,7 +9,7 @@ from models import User, db
 
 with app.app_context():
     print("\n" + "="*50)
-    print("🔑 CAMPUSKEY - OTP Codes for Demo Users")
+    print(" CAMPUSKEY - OTP Codes for Demo Users")
     print("="*50 + "\n")
     
     users = User.query.all()

@@ -44,7 +44,7 @@ def send_sms_code(phone_number, code):
     
     # Fallback: Print to console for testing
     print("\n" + "="*50)
-    print(f"📱 SMS CODE (Testing Mode)")
+    print(f" SMS CODE (Testing Mode)")
     print(f"To: {phone_number}")
     print(f"Code: {code}")
     print(f"Message: {message}")
