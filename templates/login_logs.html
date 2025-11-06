@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Login Logs</h1>
+        <p class="page-subtitle">View all system login attempts</p>
+    </div>
+
+    <div class="content-section">
+        <div class="section-card">
+            <h2 class="card-title">All Login Attempts</h2>
+            
+            {% if logs %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Time</th>
+                        <th>IP Address</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th>User Agent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.username }}</td>
+                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ log.ip_address }}</td>
+                        <td>{{ log.method|upper }}</td>
+                        <td><span class="status-badge {% if log.status == 'success' %}success{% else %}failed{% endif %}">{{ log.status|upper }}</span></td>
+                        <td>{{ log.user_agent[:50] }}{% if log.user_agent|length > 50 %}...{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No login logs found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.status-badge.success {
+    background: #dcfce7;
+    color: #16a34a;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-badge.failed {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+

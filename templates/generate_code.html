@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Generate Access Code</h1>
+        <p class="page-subtitle">Create secure, random passcodes for various purposes</p>
+    </div>
+
+    <div class="code-generator-section">
+        <!-- Instructions Card -->
+        <div class="info-card">
+            <h2 class="card-title">How to Generate a Passcode</h2>
+            <div class="procedure-list">
+                <div class="procedure-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Select Passcode Length</h3>
+                        <p>Choose the desired length for your passcode (8-32 characters). Longer passcodes are more secure.</p>
+                    </div>
+                </div>
+                <div class="procedure-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Choose Options</h3>
+                        <p>Optionally include special symbols (!@#$%^&*) for enhanced security.</p>
+                    </div>
+                </div>
+                <div class="procedure-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Generate Code</h3>
+                        <p>Click the "Generate Passcode" button to create a cryptographically secure random code.</p>
+                    </div>
+                </div>
+                <div class="procedure-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Copy & Use</h3>
+                        <p>Copy the generated passcode and use it for your intended purpose. Store it securely.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generator Card -->
+        <div class="generator-card">
+            <h2 class="card-title">Passcode Generator</h2>
+            
+            <div class="generator-controls">
+                <div class="control-group">
+                    <label for="passcodeLength">Passcode Length:</label>
+                    <div class="length-control">
+                        <input type="range" id="passcodeLength" min="8" max="32" value="12" oninput="updateLengthDisplay(this.value)">
+                        <span id="lengthDisplay">12</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="includeSymbols">
+                        Include special symbols (!@#$%^&*)
+                    </label>
+                </div>
+                
+                <button class="generate-btn" onclick="generatePasscode()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="5" height="5"></rect>
+                        <rect x="3" y="16" width="5" height="5"></rect>
+                        <rect x="16" y="3" width="5" height="5"></rect>
+                        <rect x="16" y="16" width="5" height="5"></rect>
+                    </svg>
+                    Generate Passcode
+                </button>
+            </div>
+
+            <div id="resultContainer" class="result-container" style="display: none;">
+                <div class="result-header">
+                    <h3>Generated Passcode</h3>
+                    <button class="copy-btn" onclick="copyPasscode()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="passcode-display">
+                    <code id="generatedPasscode"></code>
+                </div>
+                <div class="passcode-info">
+                    <span id="passcodeLengthInfo"></span> • 
+                    <span id="passcodeTimestamp"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Tips -->
+        <div class="tips-card">
+            <h2 class="card-title">Security Best Practices</h2>
+            <ul class="tips-list">
+                <li>Use unique passcodes for different services</li>
+                <li>Never share your passcodes with anyone</li>
+                <li>Use a password manager to store passcodes securely</li>
+                <li>Change passcodes regularly for sensitive accounts</li>
+                <li>Use at least 12-16 characters for important accounts</li>
+                <li>Avoid using personal information in passcodes</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a56db;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: #666;
+}
+
+.code-generator-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.info-card, .generator-card, .tips-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 24px;
+}
+
+.procedure-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.procedure-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #1a56db;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.step-content h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.step-content p {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+.generator-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.length-control {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.length-control input[type="range"] {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: #e5e7eb;
+    outline: none;
+}
+
+.length-control input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #1a56db;
+    cursor: pointer;
+}
+
+.length-control span {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a56db;
+    min-width: 40px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.generate-btn {
+    padding: 14px 24px;
+    background: #1a56db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.generate-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+}
+
+.result-container {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.result-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.copy-btn {
+    padding: 8px 16px;
+    background: #f3f4f6;
+    color: #111827;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: #e5e7eb;
+}
+
+.passcode-display {
+    background: #f8fafc;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 12px;
+}
+
+.passcode-display code {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a56db;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    word-break: break-all;
+}
+
+.passcode-info {
+    font-size: 12px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tips-list li {
+    padding: 12px 0;
+    padding-left: 24px;
+    position: relative;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.tips-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #0d9b68;
+    font-weight: 600;
+}
+</style>
+
+<script>
+function updateLengthDisplay(value) {
+    document.getElementById('lengthDisplay').textContent = value;
+}
+
+function generatePasscode() {
+    const length = parseInt(document.getElementById('passcodeLength').value);
+    const includeSymbols = document.getElementById('includeSymbols').checked;
+    
+    fetch('/api/generate-passcode', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            length: length,
+            include_symbols: includeSymbols
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('generatedPasscode').textContent = data.passcode;
+            document.getElementById('passcodeLengthInfo').textContent = `${data.length} characters`;
+            
+            const timestamp = new Date(data.timestamp);
+            document.getElementById('passcodeTimestamp').textContent = 
+                `Generated at ${timestamp.toLocaleTimeString()}`;
+            
+            document.getElementById('resultContainer').style.display = 'block';
+        } else {
+            alert('Error generating passcode: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+
+function copyPasscode() {
+    const passcode = document.getElementById('generatedPasscode').textContent;
+    navigator.clipboard.writeText(passcode).then(() => {
+        const btn = event.target.closest('.copy-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Copied!';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
+

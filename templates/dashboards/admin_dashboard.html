@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="security-dashboard">
+    <!-- HEADER SECTION -->
+    <section class="dashboard-header">
+        <h1 class="header-title">Admin Dashboard</h1>
+        <div class="header-greeting">
+            <h2>Welcome back, {{ data.username }}!</h2>
+            <div class="role-badge">
+                <span class="role-label">Role:</span>
+                <span class="role-value role-admin">ADMIN</span>
+                <span class="role-description">🔑 System Administrator</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SYSTEM OVERVIEW -->
+    <section class="security-section">
+        <h2 class="section-header">SYSTEM OVERVIEW</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <p class="stat-value">{{ data.total_users }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Logins</h3>
+                <p class="stat-value">{{ data.total_logins }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Recent Activity</h3>
+                <p class="stat-value">{{ data.recent_logins|length }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- RECENT LOGINS -->
+    <section class="security-section">
+        <h2 class="section-header">RECENT LOGIN ACTIVITY</h2>
+        <div class="content-card">
+            {% if data.recent_logins %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Login Time</th>
+                        <th>IP Address</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for login in data.recent_logins %}
+                    <tr>
+                        <td><strong>{{ login.username }}</strong></td>
+                        <td>{{ login.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ login.ip_address }}</td>
+                        <td>{{ login.method|upper }}</td>
+                        <td><span class="status-badge success">{{ login.status|upper }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No recent logins found.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.stat-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a56db;
+}
+
+.content-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: #f8fafc;
+}
+
+.data-table th {
+    padding: 12px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.data-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #6b7280;
+}
+
+.data-table tr:hover {
+    background: #f8fafc;
+}
+
+.status-badge.success {
+    background: #dcfce7;
+    color: #16a34a;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+

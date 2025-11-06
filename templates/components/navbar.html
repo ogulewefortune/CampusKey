@@ -1,0 +1,16 @@
+<nav class="navbar">
+    <div class="nav-brand">
+        <h2>🔑 CAMPUSKEY</h2>
+    </div>
+    {% if current_user.is_authenticated %}
+    <div class="nav-links">
+        <span>Welcome, {{ current_user.username }}</span>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        {% if current_user.role == 'admin' %}
+        <a href="{{ url_for('admin') }}">Admin</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+    {% endif %}
+</nav>
+

@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">CampusKey University Security Guidelines</h1>
+        <p class="page-subtitle">Official Information Security Policy and Best Practices</p>
+    </div>
+
+    <div class="content-section">
+        <!-- Official Policy Header -->
+        <div class="policy-header">
+            <div class="university-badge">
+                <h2>🏛️ CampusKey University</h2>
+                <p>Information Security Office</p>
+            </div>
+            <div class="policy-meta">
+                <p><strong>Policy Version:</strong> 2024.1</p>
+                <p><strong>Last Updated:</strong> January 2024</p>
+                <p><strong>Effective Date:</strong> January 15, 2024</p>
+            </div>
+        </div>
+
+        <!-- Section 1: Password Policy -->
+        <div class="policy-section">
+            <h2 class="section-title">🔐 Section 1: Password Policy</h2>
+            
+            <div class="policy-subsection">
+                <h3>1.1 Password Requirements</h3>
+                <p>All CampusKey University accounts must comply with the following password requirements:</p>
+                <ul class="policy-list">
+                    <li><strong>Minimum Length:</strong> 12 characters (16 characters recommended for administrative accounts)</li>
+                    <li><strong>Character Requirements:</strong> Must include at least one uppercase letter, one lowercase letter, one number, and one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)</li>
+                    <li><strong>Complexity:</strong> Cannot contain your username, name, or common dictionary words</li>
+                    <li><strong>Uniqueness:</strong> Cannot reuse your last 5 passwords</li>
+                    <li><strong>Expiration:</strong> Passwords must be changed every 90 days (60 days for faculty/staff)</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>1.2 Password Prohibitions</h3>
+                <p>The following practices are strictly prohibited:</p>
+                <ul class="policy-list">
+                    <li>Sharing passwords with anyone, including family members, friends, or colleagues</li>
+                    <li>Writing passwords down on paper or storing them in unencrypted files</li>
+                    <li>Using the same password for multiple accounts</li>
+                    <li>Using personal information (birthdates, addresses, pet names) in passwords</li>
+                    <li>Using common patterns or sequences (123456, password, qwerty)</li>
+                    <li>Storing passwords in browser auto-fill without master password protection</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>1.3 Password Management</h3>
+                <p>Recommended practices for managing your passwords:</p>
+                <ul class="policy-list">
+                    <li><strong>Use a Password Manager:</strong> University-approved password managers include LastPass, 1Password, or Bitwarden</li>
+                    <li><strong>Two-Factor Authentication:</strong> Always enable MFA/2FA when available</li>
+                    <li><strong>Regular Audits:</strong> Review your account activity monthly</li>
+                    <li><strong>Breach Monitoring:</strong> Use Have I Been Pwned or similar services to check for compromised credentials</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 2: Multi-Factor Authentication -->
+        <div class="policy-section">
+            <h2 class="section-title">🔑 Section 2: Multi-Factor Authentication (MFA)</h2>
+            
+            <div class="policy-subsection">
+                <h3>2.1 MFA Requirements</h3>
+                <p>All CampusKey University accounts are required to enable Multi-Factor Authentication:</p>
+                <ul class="policy-list">
+                    <li><strong>Faculty & Staff:</strong> Mandatory within 30 days of account creation</li>
+                    <li><strong>Students:</strong> Mandatory for accessing grades, financial aid, and housing systems</li>
+                    <li><strong>Administrative Accounts:</strong> Mandatory with hardware security keys for privileged access</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>2.2 Approved MFA Methods</h3>
+                <ul class="policy-list">
+                    <li><strong>Authenticator Apps:</strong> Google Authenticator, Microsoft Authenticator, Authy</li>
+                    <li><strong>SMS/Email:</strong> Secondary verification method (less secure, not recommended)</li>
+                    <li><strong>Hardware Tokens:</strong> YubiKey, FIDO2 security keys (required for admin accounts)</li>
+                    <li><strong>Biometric Authentication:</strong> Fingerprint, Face ID (approved mobile devices only)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 3: Device Security -->
+        <div class="policy-section">
+            <h2 class="section-title">📱 Section 3: Device Security</h2>
+            
+            <div class="policy-subsection">
+                <h3>3.1 University-Owned Devices</h3>
+                <ul class="policy-list">
+                    <li>Must have device encryption enabled (BitLocker for Windows, FileVault for macOS)</li>
+                    <li>Automatic screen lock after 5 minutes of inactivity</li>
+                    <li>Install only university-approved software</li>
+                    <li>Regular security updates must be installed within 7 days of release</li>
+                    <li>Report lost or stolen devices immediately to IT Security</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>3.2 Personal Devices Used for University Work</h3>
+                <ul class="policy-list">
+                    <li>Must register devices with CampusKey Device Management</li>
+                    <li>Required to have device encryption enabled</li>
+                    <li>Install Mobile Device Management (MDM) profile if accessing university email</li>
+                    <li>Keep operating systems and applications updated</li>
+                    <li>Use VPN when accessing university resources from public Wi-Fi</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>3.3 Network Security</h3>
+                <ul class="policy-list">
+                    <li><strong>CampusKey-Secure:</strong> Use the official university Wi-Fi network for all devices</li>
+                    <li><strong>VPN:</strong> Required when accessing university systems from off-campus</li>
+                    <li><strong>Public Wi-Fi:</strong> Avoid using unsecured public networks; use VPN if necessary</li>
+                    <li><strong>Firewall:</strong> Keep firewall enabled on all devices</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Email and Communication Security -->
+        <div class="policy-section">
+            <h2 class="section-title">📧 Section 4: Email and Communication Security</h2>
+            
+            <div class="policy-subsection">
+                <h3>4.1 Phishing Prevention</h3>
+                <p>Recognize and report phishing attempts:</p>
+                <ul class="policy-list">
+                    <li>Be suspicious of emails requesting passwords, payment information, or personal data</li>
+                    <li>Verify sender email addresses (check for spoofing)</li>
+                    <li>Hover over links before clicking to verify the destination URL</li>
+                    <li>Never download attachments from unknown senders</li>
+                    <li>Report suspicious emails to security@campuskey.edu</li>
+                    <li>When in doubt, contact the sender through a verified channel</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>4.2 Email Best Practices</h3>
+                <ul class="policy-list">
+                    <li>Never send passwords or sensitive data via email</li>
+                    <li>Use encrypted email for sensitive information</li>
+                    <li>Be cautious with email forwarding and sharing</li>
+                    <li>Use official @campuskey.edu email addresses for university business</li>
+                    <li>Enable email encryption for sensitive communications</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 5: Data Protection -->
+        <div class="policy-section">
+            <h2 class="section-title">💾 Section 5: Data Protection</h2>
+            
+            <div class="policy-subsection">
+                <h3>5.1 Data Classification</h3>
+                <ul class="policy-list">
+                    <li><strong>Public:</strong> Information authorized for public release</li>
+                    <li><strong>Internal:</strong> Information for university use only</li>
+                    <li><strong>Confidential:</strong> Student records, financial data, personnel information</li>
+                    <li><strong>Restricted:</strong> Research data, medical records, social security numbers</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>5.2 Data Handling Requirements</h3>
+                <ul class="policy-list">
+                    <li>Store sensitive data only on approved, encrypted storage systems</li>
+                    <li>Never store Restricted data on personal devices or cloud storage</li>
+                    <li>Use encrypted USB drives for transporting sensitive data</li>
+                    <li>Securely delete data when no longer needed (use university-approved deletion tools)</li>
+                    <li>Follow FERPA guidelines for student data protection</li>
+                    <li>Report data breaches immediately to data-protection@campuskey.edu</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 6: Incident Reporting -->
+        <div class="policy-section">
+            <h2 class="section-title">🚨 Section 6: Security Incident Reporting</h2>
+            
+            <div class="policy-subsection">
+                <h3>6.1 What to Report</h3>
+                <p>Report the following incidents immediately:</p>
+                <ul class="policy-list">
+                    <li>Suspicious login attempts or unauthorized access</li>
+                    <li>Lost or stolen devices with university access</li>
+                    <li>Exposure of passwords or credentials</li>
+                    <li>Suspected malware or virus infections</li>
+                    <li>Data breaches or unauthorized data access</li>
+                    <li>Phishing attempts targeting university accounts</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>6.2 How to Report</h3>
+                <ul class="policy-list">
+                    <li><strong>Email:</strong> security@campuskey.edu</li>
+                    <li><strong>Phone:</strong> (555) 123-SECU (7328) - Available 24/7</li>
+                    <li><strong>Online:</strong> Use the "Report an Issue" tool in CampusKey dashboard</li>
+                    <li><strong>In Person:</strong> IT Security Office, Library Building, Room 301</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>6.3 Emergency Procedures</h3>
+                <p>For critical security incidents:</p>
+                <ul class="policy-list">
+                    <li>Immediately disconnect affected devices from network</li>
+                    <li>Contact IT Security immediately</li>
+                    <li>Do not attempt to "fix" the issue yourself</li>
+                    <li>Preserve logs and evidence</li>
+                    <li>Notify your supervisor or department head</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 7: Compliance and Consequences -->
+        <div class="policy-section">
+            <h2 class="section-title">⚖️ Section 7: Compliance and Consequences</h2>
+            
+            <div class="policy-subsection">
+                <h3>7.1 Compliance Requirements</h3>
+                <ul class="policy-list">
+                    <li>All users must acknowledge and comply with this security policy</li>
+                    <li>Annual security training is mandatory for all faculty and staff</li>
+                    <li>Students must complete security awareness training before accessing university systems</li>
+                    <li>Regular security audits may be conducted</li>
+                </ul>
+            </div>
+
+            <div class="policy-subsection">
+                <h3>7.2 Violations and Consequences</h3>
+                <p>Violations of this security policy may result in:</p>
+                <ul class="policy-list">
+                    <li>Immediate suspension of account access</li>
+                    <li>Disciplinary action per university policies</li>
+                    <li>Legal action in cases of data breaches or unauthorized access</li>
+                    <li>Termination of employment for faculty/staff</li>
+                    <li>Expulsion for students in severe cases</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Reference -->
+        <div class="quick-reference">
+            <h2 class="section-title">📋 Quick Reference</h2>
+            <div class="reference-grid">
+                <div class="reference-item">
+                    <strong>Password Length:</strong> Minimum 12 characters
+                </div>
+                <div class="reference-item">
+                    <strong>Password Expiration:</strong> 90 days (60 for faculty/staff)
+                </div>
+                <div class="reference-item">
+                    <strong>MFA Required:</strong> Yes, for all accounts
+                </div>
+                <div class="reference-item">
+                    <strong>Report Security Issues:</strong> security@campuskey.edu
+                </div>
+                <div class="reference-item">
+                    <strong>Emergency Hotline:</strong> (555) 123-SECU
+                </div>
+                <div class="reference-item">
+                    <strong>IT Security Office:</strong> Library Building, Room 301
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="policy-footer">
+            <p><strong>CampusKey University Information Security Office</strong></p>
+            <p>This policy is reviewed and updated annually. Last review: January 2024</p>
+            <p>Questions? Contact: security@campuskey.edu</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a56db;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: #666;
+}
+
+.guidelines-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.guideline-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.guideline-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.guideline-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.guideline-card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 12px;
+}
+
+.guideline-card p {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+.policy-header {
+    background: linear-gradient(135deg, #1a56db 0%, #2563eb 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.university-badge h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.university-badge p {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.policy-meta {
+    text-align: right;
+}
+
+.policy-meta p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.policy-section {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.policy-subsection {
+    margin-bottom: 32px;
+}
+
+.policy-subsection:last-child {
+    margin-bottom: 0;
+}
+
+.policy-subsection h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a56db;
+    margin-bottom: 12px;
+}
+
+.policy-subsection > p {
+    font-size: 16px;
+    color: #374151;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.policy-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.policy-list li {
+    padding: 12px 0;
+    padding-left: 24px;
+    position: relative;
+    font-size: 15px;
+    color: #374151;
+    line-height: 1.7;
+}
+
+.policy-list li:before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #1a56db;
+    font-weight: 600;
+}
+
+.policy-list li strong {
+    color: #111827;
+}
+
+.quick-reference {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+}
+
+.reference-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.reference-item {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #374151;
+    border-left: 4px solid #1a56db;
+}
+
+.reference-item strong {
+    color: #111827;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.policy-footer {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    margin-top: 32px;
+}
+
+.policy-footer p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.policy-footer strong {
+    color: #111827;
+}
+
+.content-section {
+    display: flex;
+    flex-direction: column;
+}
+</style>
+{% endblock %}
+

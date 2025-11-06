@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Device Security</h1>
+        <p class="page-subtitle">Manage and monitor your trusted devices</p>
+    </div>
+
+    <div class="content-section">
+        {% if devices %}
+        <div class="device-list">
+            {% for device in devices %}
+            <div class="device-card">
+                <div class="device-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                </div>
+                <div class="device-info">
+                    <h3>Device {{ loop.index }}</h3>
+                    <p class="device-details">IP: {{ device.ip_address }}</p>
+                    <p class="device-time">Last active: {{ device.last_activity.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+                <span class="device-status trusted">Trusted</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No active devices found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a56db;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: #666;
+}
+
+.device-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.device-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.device-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1a56db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.device-info {
+    flex: 1;
+}
+
+.device-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.device-details, .device-time {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 4px 0;
+}
+
+.device-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.device-status.trusted {
+    background: #d1fae5;
+    color: #0d9b68;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    color: #6b7280;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+</style>
+{% endblock %}
+

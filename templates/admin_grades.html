@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Grades Management</h1>
+        <p class="page-subtitle">View and manage all grades in the system</p>
+    </div>
+
+    <div class="content-section">
+        <div class="section-card">
+            <h2 class="card-title">All Grades</h2>
+            
+            {% if grades %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Grade</th>
+                        <th>Percentage</th>
+                        <th>Professor</th>
+                        <th>Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td>{{ grade.student.username }}</td>
+                        <td>{{ grade.course.code }} - {{ grade.course.name }}</td>
+                        <td><strong>{{ grade.grade_value }}</strong></td>
+                        <td>{{ "%.1f"|format(grade.percentage) }}%</td>
+                        <td>{{ grade.professor.username }}</td>
+                        <td>{{ grade.updated_at.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No grades found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

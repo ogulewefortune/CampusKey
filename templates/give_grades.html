@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Give Grades</h1>
+        <p class="page-subtitle">Assign grades to your students</p>
+    </div>
+
+    <div class="content-section">
+        <div class="section-card">
+            <h2 class="card-title">Assign Grade</h2>
+            <form id="gradeForm" class="grade-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Select Course:</label>
+                        <select id="courseSelect" required>
+                            <option value="">Choose a course...</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.code }} - {{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Student:</label>
+                        <select id="studentSelect" required>
+                            <option value="">Choose a student...</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">{{ student.username }} ({{ student.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Grade Value:</label>
+                        <select id="gradeValue" required>
+                            <option value="">Select grade...</option>
+                            <option value="A+">A+</option>
+                            <option value="A">A</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B">B</option>
+                            <option value="B-">B-</option>
+                            <option value="C+">C+</option>
+                            <option value="C">C</option>
+                            <option value="C-">C-</option>
+                            <option value="D">D</option>
+                            <option value="F">F</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Percentage (0-100):</label>
+                        <input type="number" id="percentage" min="0" max="100" step="0.1" required>
+                    </div>
+                </div>
+                <button type="submit" class="primary-btn">Submit Grade</button>
+            </form>
+        </div>
+
+        <div class="section-card">
+            <h2 class="card-title">Recent Grades Given</h2>
+            {% if grades %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Grade</th>
+                        <th>Percentage</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td>{{ grade.student.username }}</td>
+                        <td>{{ grade.course.code }}</td>
+                        <td><strong>{{ grade.grade_value }}</strong></td>
+                        <td>{{ "%.1f"|format(grade.percentage) }}%</td>
+                        <td>{{ grade.created_at.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No grades given yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('gradeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const data = {
+        course_id: parseInt(document.getElementById('courseSelect').value),
+        student_id: parseInt(document.getElementById('studentSelect').value),
+        grade_value: document.getElementById('gradeValue').value,
+        percentage: parseFloat(document.getElementById('percentage').value)
+    };
+    
+    fetch('/professor/submit-grade', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+});
+</script>
+
+<style>
+.grade-form {
+    margin-top: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+}
+</style>
+{% endblock %}
+
