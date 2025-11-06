@@ -4,7 +4,7 @@ Secure University Access System with Multi-Factor Authentication
 
 ## Features
 
-- **SMS-based OTP authentication** - Receive verification codes via SMS
+- **Email-based OTP authentication** - Receive verification codes via email
 - OTP-based authentication (TOTP authenticator apps)
 - Role-based access control (Admin, Professor, Student)
 - Session management
@@ -46,32 +46,16 @@ The system creates sample users automatically:
 - **Professor**: username: `professor`, email: `prof@campuskey.edu`
 - **Student**: username: `student`, email: `student@campuskey.edu`
 
-## SMS Authentication
+## Email Authentication
 
-### Testing Mode (Default)
+### How It Works
 
-By default, SMS codes are printed to the console instead of being sent via SMS. This is perfect for development:
-
-1. Enter your username and phone number on the login page
+1. Enter your username and email address on the login page
 2. Click "Send Code"
-3. Check your terminal/console where Flask is running - you'll see the code printed there
+3. Check your email or terminal/console where Flask is running - you'll see the code printed there
 4. Enter the code to log in
 
-### Production Setup with Twilio
-
-To enable real SMS sending:
-
-1. Sign up for Twilio (https://www.twilio.com)
-2. Get your credentials: Account SID, Auth Token, and Phone Number
-3. Set environment variables:
-   ```bash
-   export TWILIO_ACCOUNT_SID="your_account_sid"
-   export TWILIO_AUTH_TOKEN="your_auth_token"
-   export TWILIO_PHONE_NUMBER="+1234567890"
-   ```
-4. Restart the application
-
-**Phone Number Format:** Use E.164 format (e.g., `+1234567890`)
+**Note:** In development mode, verification codes are printed to the console. Configure email settings in `email_service.py` for production email sending.
 
 ## Getting TOTP Codes
 

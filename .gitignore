@@ -1,0 +1,78 @@
+# Python
+
+__pycache__/
+
+*.py[cod]
+
+*$py.class
+
+*.so
+
+.Python
+
+venv/
+
+env/
+
+ENV/
+
+.venv
+
+
+
+# Database
+
+instance/*.db
+
+instance/*.db-journal
+
+*.sqlite
+
+*.sqlite3
+
+
+
+# Environment variables
+
+.env
+
+.env.local
+
+
+
+# Logs
+
+*.log
+
+server.log
+
+
+
+# IDE
+
+.vscode/
+
+.idea/
+
+*.swp
+
+*.swo
+
+*~
+
+
+
+# OS
+
+.DS_Store
+
+Thumbs.db
+
+
+
+# Project specific
+
+email_config.sh
+
+*.pyc
+
