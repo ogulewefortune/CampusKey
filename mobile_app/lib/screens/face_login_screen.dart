@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 
 class FaceLoginScreen extends StatefulWidget {
+  const FaceLoginScreen({super.key});
+
   @override
   _FaceLoginScreenState createState() => _FaceLoginScreenState();
 }

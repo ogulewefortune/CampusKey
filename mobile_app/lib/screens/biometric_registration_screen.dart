@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 
 class BiometricRegistrationScreen extends StatefulWidget {
+  const BiometricRegistrationScreen({super.key});
+
   @override
   _BiometricRegistrationScreenState createState() => _BiometricRegistrationScreenState();
 }
@@ -12,7 +14,7 @@ class _BiometricRegistrationScreenState extends State<BiometricRegistrationScree
   int _captureStep = 0; // 0: Front, 1: Left, 2: Right
   String _statusMessage = 'Position your face in the center';
 
-  List<String> _captureInstructions = [
+  final List<String> _captureInstructions = [
     'Look straight ahead',
     'Turn your head slightly left',
     'Turn your head slightly right',

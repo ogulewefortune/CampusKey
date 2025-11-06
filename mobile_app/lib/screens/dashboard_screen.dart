@@ -11,11 +11,11 @@ class DashboardScreen extends StatefulWidget {
   final String token;
 
   const DashboardScreen({
-    Key? key,
+    super.key,
     required this.username,
     required this.role,
     required this.token,
-  }) : super(key: key);
+  });
 
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
@@ -82,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Mock login history data
-  List<Map<String, dynamic>> _loginHistory = [
+  final List<Map<String, dynamic>> _loginHistory = [
     {'date': '2024-01-15 09:30:23', 'method': 'Password', 'location': 'Campus WiFi', 'status': 'Success'},
     {'date': '2024-01-14 14:15:47', 'method': 'Biometric', 'location': 'Library', 'status': 'Success'},
     {'date': '2024-01-14 08:45:12', 'method': 'RFID', 'location': 'Main Entrance', 'status': 'Success'},
@@ -228,11 +228,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Text('Building Access', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
-          ..._accessBuildings.map((building) => _buildAccessCard(building)).toList(),
+          ..._accessBuildings.map((building) => _buildAccessCard(building)),
           SizedBox(height: 20),
           Text('File Access Levels', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
-          ..._fileAccess.map((file) => _buildFileAccessCard(file)).toList(),
+          ..._fileAccess.map((file) => _buildFileAccessCard(file)),
         ],
       ),
     );
@@ -247,7 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Text('Login History (Last 30 Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
-          ..._loginHistory.map((login) => _buildLoginHistoryItem(login)).toList(),
+          ..._loginHistory.map((login) => _buildLoginHistoryItem(login)),
         ],
       ),
     );

@@ -6,7 +6,7 @@ class ProfileScreen extends StatefulWidget {
   final String username;
   final String role;
 
-  const ProfileScreen({Key? key, required this.username, required this.role}) : super(key: key);
+  const ProfileScreen({super.key, required this.username, required this.role});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();

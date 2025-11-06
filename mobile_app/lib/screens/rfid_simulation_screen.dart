@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 
 class RFIDSimulationScreen extends StatefulWidget {
+  const RFIDSimulationScreen({super.key});
+
   @override
   _RFIDSimulationScreenState createState() => _RFIDSimulationScreenState();
 }
@@ -145,10 +147,10 @@ class _RFIDSimulationScreenState extends State<RFIDSimulationScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _submitManualToken,
-              child: Text('Submit Token'),
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 50),
               ),
+              child: Text('Submit Token'),
             ),
             SizedBox(height: 20),
             TextButton(

@@ -7,11 +7,11 @@ class VerificationCodeWidget extends StatelessWidget {
   final VoidCallback onRefresh;
 
   const VerificationCodeWidget({
-    Key? key,
+    super.key,
     required this.code,
     required this.expirySeconds,
     required this.onRefresh,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

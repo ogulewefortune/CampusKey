@@ -8,12 +8,12 @@ class AccessCard extends StatelessWidget {
   final Color? color;
 
   const AccessCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
     this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

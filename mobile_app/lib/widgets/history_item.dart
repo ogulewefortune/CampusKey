@@ -8,12 +8,12 @@ class HistoryItem extends StatelessWidget {
   final bool isSuccess;
 
   const HistoryItem({
-    Key? key,
+    super.key,
     required this.date,
     required this.method,
     required this.location,
     required this.isSuccess,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 
 class PasswordResetFlowScreen extends StatefulWidget {
+  const PasswordResetFlowScreen({super.key});
+
   @override
   _PasswordResetFlowScreenState createState() => _PasswordResetFlowScreenState();
 }
@@ -32,10 +34,10 @@ class _PasswordResetFlowScreenState extends State<PasswordResetFlowScreen> {
           SizedBox(height: 20),
           ElevatedButton(
             onPressed: _sendVerificationCode,
-            child: Text('Send Verification Code'),
             style: ElevatedButton.styleFrom(
               minimumSize: Size(double.infinity, 50),
             ),
+            child: Text('Send Verification Code'),
           ),
         ],
       ),
