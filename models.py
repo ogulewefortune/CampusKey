@@ -5,3 +5,5 @@ from flask_login import UserMixin
 from datetime import datetime
 
 import pyotp
+
+db = SQLAlchemy()
