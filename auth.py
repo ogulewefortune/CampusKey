@@ -108,3 +108,5 @@ def get_user_role(username):
     else:
         print(f"The role of {username} is: {result}")
     return
+
+
