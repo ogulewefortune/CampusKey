@@ -55,8 +55,14 @@ def get_active_session():
 
     # check for expired sessions, and remove them
     for result in results:
-        if (time - result[2]).total_seconds() > 7200:
+        if (time - result[2]).total_seconds() > 7200: # expire time = 2 hours
             cur.execute("DELETE FROM table WHERE session=?", result[1])
             con.commit()
             results.remove(result)
     return results
+
+def role_required(func):
+    def wrapper(*args):
+        
+    return wrapper
+
