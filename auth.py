@@ -61,6 +61,7 @@ def get_active_session():
             results.remove(result)
     return results
 
+# decorator functions to ensure proper role authentication
 def role_required(func):
     def wrapper(*args):
         if current_user.is_authenticated:
@@ -78,3 +79,32 @@ def admin_required(func):
             return wrapper
     print("Error 403")
     return wrapper
+
+# checks that user exists and has the expected role
+def verify_user_role(username, expected_role):
+    con = sqllite3.connect("instance/campuskey.db")
+    cur = con.cursor()
+
+    # get role for provided user
+    cur.execute("SELECT role FROM table WHERE user=?", username)
+    result = cur.fetchone()
+    
+    if result is None or result != expected_role:
+        return False
+    else:
+        return True
+
+def get_user_role(username):
+    con = sqllite3.connect("instance/campuskey.db")
+    cur = con.cursor()
+
+    # get role for provided user
+    cur.execute("SELECT role FROM table WHERE user=?", username)
+    result = cur.fetchone()
+    
+    # Checks if user exists, if they do prints their role
+    if result is None:
+        print("User does not exist")
+    else:
+        print(f"The role of {username} is: {result}")
+    return
