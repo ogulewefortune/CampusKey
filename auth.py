@@ -63,6 +63,18 @@ def get_active_session():
 
 def role_required(func):
     def wrapper(*args):
-        
+        if current_user.is_authenticated:
+            if current_user.role in args:
+                func()
+                return wrapper
+    print("Error 403")
     return wrapper
 
+
+def admin_required(func):
+    def wrapper(*args):
+        if "admin" in args:
+            func()
+            return wrapper
+    print("Error 403")
+    return wrapper
