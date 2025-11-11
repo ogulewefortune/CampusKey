@@ -488,7 +488,7 @@ def send_email_code_route():
     if not smtp_username or not smtp_password:
         # SMTP not configured - show code in response for testing
         # This allows OTP to work even if email fails (code is shown)
-        print(f"⚠️ EMAIL NOT CONFIGURED - Showing code in response:")
+        print(f"[WARNING] EMAIL NOT CONFIGURED - Showing code in response:")
         print(f"   SMTP_USERNAME: {'SET' if smtp_username else 'NOT SET'}")
         print(f"   SMTP_PASSWORD: {'SET' if smtp_password else 'NOT SET'}")
         print(f"   SMTP_SERVER: {os.environ.get('SMTP_SERVER', 'NOT SET')}")
@@ -515,18 +515,18 @@ def send_email_code_route():
         try:
             result = send_email_code(email, code, username)
             if result:
-                print(f"✅ Email sent successfully to {email}")
+                print(f"[SUCCESS] Email sent successfully to {email}")
                 email_result['status'] = 'success'
                 email_result['success'] = True
             else:
-                print(f"⚠️ Email service returned False for {email}")
+                print(f"[WARNING] Email service returned False for {email}")
                 email_result['status'] = 'failed'
                 email_result['error'] = 'Email service returned False'
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
             # Log detailed error for debugging in Render logs
-            print(f"❌ ERROR SENDING EMAIL TO {email}:")
+            print(f"[ERROR] ERROR SENDING EMAIL TO {email}:")
             print(f"   Error: {str(e)}")
             print(f"   Full traceback:")
             print(error_details)
@@ -553,7 +553,7 @@ def send_email_code_route():
         })
     elif email_result['success']:
         # Success!
-        print(f"✅ Email sent successfully to {email}")
+        print(f"[SUCCESS] Email sent successfully to {email}")
         return jsonify({
             'success': True,
             'message': f'Verification code sent successfully to {email}. Please check your inbox and spam folder.',
@@ -563,7 +563,7 @@ def send_email_code_route():
     else:
         # Failed - return error with code so user can still login
         error_msg = email_result['error'] or 'Unknown error'
-        print(f"⚠️ Email failed but code is: {code} (for {username})")
+        print(f"[WARNING] Email failed but code is: {code} (for {username})")
         print(f"   Error details: {error_msg}")
         return jsonify({
             'success': False,
@@ -2134,7 +2134,7 @@ def test_email():
             except Exception as e:
                 import traceback
                 error_traceback = traceback.format_exc()
-                print(f"❌ TEST EMAIL FAILED:")
+                print(f"[ERROR] TEST EMAIL FAILED:")
                 print(f"   Error: {str(e)}")
                 print(f"   Traceback: {error_traceback}")
                 return jsonify({

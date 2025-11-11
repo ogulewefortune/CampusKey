@@ -34,6 +34,138 @@ from email.mime.multipart import MIMEMultipart
 # Header handles UTF-8 encoding for non-ASCII characters in email subjects
 from email.header import Header
 
+# Python import statement: Imports urllib for HTTP requests (used for SendGrid API)
+# urllib.request and urllib.error are used to make HTTP POST requests to SendGrid
+try:
+    import urllib.request
+    import urllib.error
+    import urllib.parse
+    import json
+except ImportError:
+    pass  # Will use SMTP fallback if urllib not available
+
+
+# Python function definition: Function to send email via SendGrid API (works on Render free tier)
+def send_email_via_sendgrid(email_address, code, username, api_key):
+    """
+    Send verification code via SendGrid API.
+    This works on Render free tier since it uses HTTP API instead of SMTP.
+    """
+    from_email = os.environ.get('FROM_EMAIL', 'noreply@campuskey.com')
+    subject = "CAMPUSKEY Verification Code"
+    
+    # HTML email template (same as SMTP version)
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Google Sans', Roboto, Arial, sans-serif; background-color: #202124; color: #e8eaed;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #202124; padding: 20px;">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="background-color: #202124; max-width: 600px;">
+                        <tr>
+                            <td style="background-color: #1a73e8; padding: 24px 32px; text-align: center;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 400; letter-spacing: 0.25px;">CAMPUSKEY Verification Code</h1>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #202124; padding: 32px; color: #e8eaed; font-size: 14px; line-height: 20px;">
+                                <p style="margin: 0 0 16px 0; color: #e8eaed;">Dear CAMPUSKEY User,</p>
+                                <p style="margin: 0 0 16px 0; color: #e8eaed;">
+                                    We received a request to access your CAMPUSKEY Account
+                                    <span style="color: #8ab4f8; text-decoration: underline;">{email_address}</span>
+                                    through your email address. Your CAMPUSKEY verification code is:
+                                </p>
+                                <div style="margin: 24px 0; text-align: center;">
+                                    <div style="font-size: 36px; font-weight: 400; color: #e8eaed; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                                        {code}
+                                    </div>
+                                </div>
+                                <p style="margin: 16px 0; color: #e8eaed;">
+                                    If you did not request this code, it is possible that someone else is trying to access the CAMPUSKEY Account
+                                    <span style="color: #8ab4f8; text-decoration: underline;">{email_address}</span>.
+                                    Do not forward or give this code to anyone.
+                                </p>
+                                <p style="margin: 24px 0 0 0; color: #e8eaed;">Sincerely yours,</p>
+                                <p style="margin: 4px 0 0 0; color: #e8eaed;">The CAMPUSKEY Security Team</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+    
+    text_body = f"""Dear CAMPUSKEY User,
+
+We received a request to access your CAMPUSKEY Account {email_address} through your email address. Your CAMPUSKEY verification code is:
+
+{code}
+
+If you did not request this code, it is possible that someone else is trying to access the CAMPUSKEY Account {email_address}. Do not forward or give this code to anyone.
+
+Sincerely yours,
+The CAMPUSKEY Security Team
+"""
+    
+    # SendGrid API v3 endpoint
+    url = "https://api.sendgrid.com/v3/mail/send"
+    
+    # Prepare email data
+    email_data = {
+        "personalizations": [{
+            "to": [{"email": email_address}],
+            "subject": subject
+        }],
+        "from": {"email": from_email},
+        "content": [
+            {
+                "type": "text/plain",
+                "value": text_body
+            },
+            {
+                "type": "text/html",
+                "value": html_body
+            }
+        ]
+    }
+    
+    # Make HTTP request to SendGrid
+    try:
+        print(f"\n{'='*60}")
+        print(f"SENDING EMAIL VIA SENDGRID API")
+        print(f"{'='*60}")
+        print(f"   From: {from_email}")
+        print(f"   To: {email_address}")
+        print(f"   Subject: {subject}")
+        
+        data = json.dumps(email_data).encode('utf-8')
+        req = urllib.request.Request(url, data=data)
+        req.add_header('Content-Type', 'application/json')
+        req.add_header('Authorization', f'Bearer {api_key}')
+        
+        with urllib.request.urlopen(req, timeout=15) as response:
+            if response.status == 202:  # SendGrid returns 202 for accepted
+                print(f"[SUCCESS] Email sent successfully via SendGrid!")
+                print(f"{'='*60}\n")
+                return True
+            else:
+                raise Exception(f"SendGrid API returned status {response.status}")
+                
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        print(f"[ERROR] SendGrid API error: {e.code} - {error_body}")
+        raise Exception(f"SendGrid API error: {e.code} - {error_body}")
+    except Exception as e:
+        print(f"[ERROR] SendGrid request failed: {str(e)}")
+        raise
+
 
 # Python function definition: Function to generate a random 6-digit verification code
 def generate_verification_code():
@@ -51,8 +183,20 @@ def send_email_code(email_address, code, username):
     # Python docstring: Documents function purpose and behavior
     """
     Send verification code via email.
-    Uses SMTP if configured, otherwise prints to console for testing.
+    Tries SendGrid API first (works on Render free tier), then SMTP, then console fallback.
     """
+    # Check if SendGrid is configured (works on Render free tier)
+    email_service = os.environ.get('EMAIL_SERVICE', '').lower()
+    sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+    
+    if email_service == 'sendgrid' and sendgrid_api_key:
+        try:
+            return send_email_via_sendgrid(email_address, code, username, sendgrid_api_key)
+        except Exception as e:
+            print(f"[WARNING] SendGrid failed, falling back to SMTP: {str(e)}")
+            # Fall through to SMTP
+    
+    # Fall back to SMTP (may be blocked on Render free tier)
     # Python comment: Marks email configuration section
     # Email configuration from environment variables
     # Python variable: Gets SMTP server address from environment variable
@@ -176,7 +320,7 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
         try:
             # Python print statement: Outputs status message to console
             print(f"\n{'='*60}")
-            print(f"📧 ATTEMPTING TO SEND EMAIL")
+            print(f"ATTEMPTING TO SEND EMAIL")
             print(f"{'='*60}")
             # Python print statement: Displays sender email address
             print(f"   From: {from_email}")
@@ -241,19 +385,19 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                         # SSL connection (port 465) - more reliable on Render
                         try:
                             server = smtplib.SMTP_SSL(smtp_server, port, timeout=15)
-                            print(f"   ✅ SSL connection established!")
+                            print(f"   [SUCCESS] SSL connection established!")
                         except Exception as conn_e:
-                            print(f"   ❌ SSL connection failed: {str(conn_e)}")
+                            print(f"   [ERROR] SSL connection failed: {str(conn_e)}")
                             raise
                     else:
                         # TLS connection (port 587)
                         try:
                             server = smtplib.SMTP(smtp_server, port, timeout=15)
-                            print(f"   ✅ TCP connection established, starting TLS...")
+                            print(f"   [SUCCESS] TCP connection established, starting TLS...")
                             server.starttls()
-                            print(f"   ✅ TLS handshake completed!")
+                            print(f"   [SUCCESS] TLS handshake completed!")
                         except Exception as conn_e:
-                            print(f"   ❌ TLS connection failed: {str(conn_e)}")
+                            print(f"   [ERROR] TLS connection failed: {str(conn_e)}")
                             raise
                     
                     # Authenticate
@@ -261,24 +405,24 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                     print(f"   Username: {smtp_username}")
                     try:
                         server.login(smtp_username, smtp_password)
-                        print(f"   ✅ Authentication successful!")
-                        print(f"✅ {method} connection successful on port {port}")
+                        print(f"   [SUCCESS] Authentication successful!")
+                        print(f"[SUCCESS] {method} connection successful on port {port}")
                         connection_successful = True
                         break
                     except smtplib.SMTPAuthenticationError as auth_e:
-                        print(f"   ❌ Authentication failed: {str(auth_e)}")
-                        print(f"   💡 Tip: Make sure you're using a Gmail App Password (16 chars)")
-                        print(f"   💡 Tip: Verify SMTP_USERNAME matches the email that created the App Password")
+                        print(f"   [ERROR] Authentication failed: {str(auth_e)}")
+                        print(f"   Tip: Make sure you're using a Gmail App Password (16 chars)")
+                        print(f"   Tip: Verify SMTP_USERNAME matches the email that created the App Password")
                         raise
                     except Exception as auth_e:
-                        print(f"   ❌ Authentication error: {str(auth_e)}")
+                        print(f"   [ERROR] Authentication error: {str(auth_e)}")
                         raise
                         
                 except socket.timeout as e:
                     last_error = e
                     error_msg = f"Connection timeout after 15 seconds"
-                    print(f"⚠️ {method} connection timed out on port {port}: {error_msg}")
-                    print(f"   💡 This might mean Render is blocking port {port}")
+                    print(f"[WARNING] {method} connection timed out on port {port}: {error_msg}")
+                    print(f"   Tip: This might mean Render is blocking port {port}")
                     if server:
                         try:
                             server.quit()
@@ -289,10 +433,10 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                 except (OSError, ConnectionError) as e:
                     last_error = e
                     error_msg = str(e)
-                    print(f"⚠️ {method} connection failed on port {port}: {error_msg}")
+                    print(f"[WARNING] {method} connection failed on port {port}: {error_msg}")
                     print(f"   Error type: {type(e).__name__}")
                     if "101" in error_msg or "unreachable" in error_msg.lower():
-                        print(f"   💡 Network unreachable - Render may be blocking this port")
+                        print(f"   Tip: Network unreachable - Render may be blocking this port")
                     if server:
                         try:
                             server.quit()
@@ -303,9 +447,9 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                 except smtplib.SMTPAuthenticationError as e:
                     last_error = e
                     error_msg = str(e)
-                    print(f"⚠️ {method} authentication failed on port {port}: {error_msg}")
-                    print(f"   💡 Make sure you're using a Gmail App Password (not regular password)")
-                    print(f"   💡 Verify SMTP_USERNAME matches the email that created the App Password")
+                    print(f"[WARNING] {method} authentication failed on port {port}: {error_msg}")
+                    print(f"   Tip: Make sure you're using a Gmail App Password (not regular password)")
+                    print(f"   Tip: Verify SMTP_USERNAME matches the email that created the App Password")
                     if server:
                         try:
                             server.quit()
@@ -316,7 +460,7 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                 except (TimeoutError, smtplib.SMTPException) as e:
                     last_error = e
                     error_msg = str(e)
-                    print(f"⚠️ {method} connection failed on port {port}: {error_msg}")
+                    print(f"[WARNING] {method} connection failed on port {port}: {error_msg}")
                     print(f"   Error type: {type(e).__name__}")
                     if server:
                         try:
@@ -328,7 +472,7 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                 except Exception as e:
                     last_error = e
                     error_msg = str(e)
-                    print(f"⚠️ {method} connection failed on port {port}: {error_msg}")
+                    print(f"[WARNING] {method} connection failed on port {port}: {error_msg}")
                     print(f"   Unexpected error type: {type(e).__name__}")
                     import traceback
                     print(f"   Traceback: {traceback.format_exc()}")

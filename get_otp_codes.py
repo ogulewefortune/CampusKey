@@ -68,7 +68,7 @@ with app.app_context():
     
     # Python print statement: Outputs blank line for spacing
     # Outputs helpful tip about OTP code refresh interval
-    print("\n💡 Tip: OTP codes refresh every 30 seconds")
+    print("\nTip: OTP codes refresh every 30 seconds")
     # Python print statement: Outputs instruction on where to use the codes
     # Provides URL where users can log in with these codes
     print("   Use these codes to log in at http://localhost:5001\n")
