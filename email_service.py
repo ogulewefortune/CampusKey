@@ -18,6 +18,9 @@ import os
 # Python import statement: Imports smtplib module for sending emails via SMTP protocol
 # smtplib provides SMTP client functionality to send emails
 import smtplib
+# Python import statement: Imports socket module for network operations
+# Used for handling socket timeout exceptions
+import socket
 
 # Python import statement: Imports MIMEText class for creating plain text email messages
 # MIMEText is used to create email body content
@@ -229,26 +232,106 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
             
             last_error = None
             for port, method in ports_to_try:
+                server = None
                 try:
                     print(f"Attempting {method} connection on port {port}...")
+                    print(f"   Connecting to {smtp_server}:{port} (timeout: 15s)...")
+                    
                     if method == 'SSL':
                         # SSL connection (port 465) - more reliable on Render
-                        server = smtplib.SMTP_SSL(smtp_server, port, timeout=15)
+                        try:
+                            server = smtplib.SMTP_SSL(smtp_server, port, timeout=15)
+                            print(f"   ✅ SSL connection established!")
+                        except Exception as conn_e:
+                            print(f"   ❌ SSL connection failed: {str(conn_e)}")
+                            raise
                     else:
                         # TLS connection (port 587)
-                        server = smtplib.SMTP(smtp_server, port, timeout=15)
-                        server.starttls()
+                        try:
+                            server = smtplib.SMTP(smtp_server, port, timeout=15)
+                            print(f"   ✅ TCP connection established, starting TLS...")
+                            server.starttls()
+                            print(f"   ✅ TLS handshake completed!")
+                        except Exception as conn_e:
+                            print(f"   ❌ TLS connection failed: {str(conn_e)}")
+                            raise
                     
                     # Authenticate
-                    print(f"Authenticating with SMTP server...")
-                    server.login(smtp_username, smtp_password)
-                    print(f"✅ {method} connection successful on port {port}")
-                    connection_successful = True
-                    break
-                except (OSError, ConnectionError, TimeoutError, smtplib.SMTPException) as e:
+                    print(f"   Authenticating with SMTP server...")
+                    print(f"   Username: {smtp_username}")
+                    try:
+                        server.login(smtp_username, smtp_password)
+                        print(f"   ✅ Authentication successful!")
+                        print(f"✅ {method} connection successful on port {port}")
+                        connection_successful = True
+                        break
+                    except smtplib.SMTPAuthenticationError as auth_e:
+                        print(f"   ❌ Authentication failed: {str(auth_e)}")
+                        print(f"   💡 Tip: Make sure you're using a Gmail App Password (16 chars)")
+                        print(f"   💡 Tip: Verify SMTP_USERNAME matches the email that created the App Password")
+                        raise
+                    except Exception as auth_e:
+                        print(f"   ❌ Authentication error: {str(auth_e)}")
+                        raise
+                        
+                except socket.timeout as e:
+                    last_error = e
+                    error_msg = f"Connection timeout after 15 seconds"
+                    print(f"⚠️ {method} connection timed out on port {port}: {error_msg}")
+                    print(f"   💡 This might mean Render is blocking port {port}")
+                    if server:
+                        try:
+                            server.quit()
+                        except:
+                            pass
+                    server = None
+                    continue
+                except (OSError, ConnectionError) as e:
                     last_error = e
                     error_msg = str(e)
                     print(f"⚠️ {method} connection failed on port {port}: {error_msg}")
+                    print(f"   Error type: {type(e).__name__}")
+                    if "101" in error_msg or "unreachable" in error_msg.lower():
+                        print(f"   💡 Network unreachable - Render may be blocking this port")
+                    if server:
+                        try:
+                            server.quit()
+                        except:
+                            pass
+                    server = None
+                    continue
+                except smtplib.SMTPAuthenticationError as e:
+                    last_error = e
+                    error_msg = str(e)
+                    print(f"⚠️ {method} authentication failed on port {port}: {error_msg}")
+                    print(f"   💡 Make sure you're using a Gmail App Password (not regular password)")
+                    print(f"   💡 Verify SMTP_USERNAME matches the email that created the App Password")
+                    if server:
+                        try:
+                            server.quit()
+                        except:
+                            pass
+                    server = None
+                    continue
+                except (TimeoutError, smtplib.SMTPException) as e:
+                    last_error = e
+                    error_msg = str(e)
+                    print(f"⚠️ {method} connection failed on port {port}: {error_msg}")
+                    print(f"   Error type: {type(e).__name__}")
+                    if server:
+                        try:
+                            server.quit()
+                        except:
+                            pass
+                    server = None
+                    continue
+                except Exception as e:
+                    last_error = e
+                    error_msg = str(e)
+                    print(f"⚠️ {method} connection failed on port {port}: {error_msg}")
+                    print(f"   Unexpected error type: {type(e).__name__}")
+                    import traceback
+                    print(f"   Traceback: {traceback.format_exc()}")
                     if server:
                         try:
                             server.quit()
