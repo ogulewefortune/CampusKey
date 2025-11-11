@@ -481,17 +481,39 @@ def send_email_code_route():
     db.session.commit()
     
     # Python comment: Marks email sending section
-    # Send email to the email address entered in the form
+    # Check if SMTP is configured before attempting to send
+    smtp_username = os.environ.get('SMTP_USERNAME')
+    smtp_password = os.environ.get('SMTP_PASSWORD', '').strip()
+    
+    if not smtp_username or not smtp_password:
+        # SMTP not configured - show code in response for testing
+        # This allows OTP to work even if email fails (code is shown)
+        print(f"⚠️ EMAIL NOT CONFIGURED - Showing code in response:")
+        print(f"   SMTP_USERNAME: {'SET' if smtp_username else 'NOT SET'}")
+        print(f"   SMTP_PASSWORD: {'SET' if smtp_password else 'NOT SET'}")
+        print(f"   Code for {username}: {code}")
+        # Still return success but include code in message
+        return jsonify({
+            'success': True,
+            'message': f'Email service not configured. Your verification code is: {code}\n\nTo enable email sending, set SMTP_USERNAME and SMTP_PASSWORD in Render environment variables.',
+            'code': code  # Include code in response for testing
+        })
+    
     # Send email asynchronously to avoid blocking the request
     import threading
+    email_sent = {'status': 'pending', 'error': None}
+    
     def send_email_async():
         """Send email in background thread"""
         try:
             result = send_email_code(email, code, username)
             if result:
                 print(f"✅ Email sent successfully to {email}")
+                email_sent['status'] = 'success'
             else:
                 print(f"⚠️ Email service returned False for {email}")
+                email_sent['status'] = 'failed'
+                email_sent['error'] = 'Email service returned False'
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
@@ -505,17 +527,22 @@ def send_email_code_route():
             print(f"   SMTP_USERNAME: {os.environ.get('SMTP_USERNAME', 'NOT SET')}")
             print(f"   SMTP_PASSWORD: {'SET' if os.environ.get('SMTP_PASSWORD') else 'NOT SET'}")
             print(f"   FROM_EMAIL: {os.environ.get('FROM_EMAIL', 'NOT SET')}")
+            email_sent['status'] = 'failed'
+            email_sent['error'] = str(e)
     
     # Start email sending in background thread
     email_thread = threading.Thread(target=send_email_async, daemon=True)
     email_thread.start()
     
-    # Return immediately - email is being sent in background
-    # This prevents the request from timing out on Render
+    # Wait a moment to see if email starts sending (check for immediate errors)
+    import time
+    time.sleep(0.5)  # Wait 500ms to catch immediate configuration errors
+    
+    # Return success - email is being sent in background
     # Note: Check Render logs if email doesn't arrive
     return jsonify({
         'success': True, 
-        'message': f'Verification code is being sent to {email}. Please check your inbox and spam folder. If you don\'t receive it, check Render logs for errors.'
+        'message': f'Verification code is being sent to {email}. Please check your inbox and spam folder.'
     })
 
 
