@@ -499,21 +499,25 @@ def send_email_code_route():
             'code': code  # Include code in response for testing
         })
     
-    # Send email asynchronously to avoid blocking the request
+    # Try to send email synchronously first (with timeout)
+    # This ensures we can report actual errors to the user
+    import signal
     import threading
-    email_sent = {'status': 'pending', 'error': None}
     
-    def send_email_async():
-        """Send email in background thread"""
+    email_result = {'status': None, 'error': None, 'success': False}
+    
+    def send_email_with_timeout():
+        """Send email with timeout"""
         try:
             result = send_email_code(email, code, username)
             if result:
                 print(f"✅ Email sent successfully to {email}")
-                email_sent['status'] = 'success'
+                email_result['status'] = 'success'
+                email_result['success'] = True
             else:
                 print(f"⚠️ Email service returned False for {email}")
-                email_sent['status'] = 'failed'
-                email_sent['error'] = 'Email service returned False'
+                email_result['status'] = 'failed'
+                email_result['error'] = 'Email service returned False'
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
@@ -527,19 +531,38 @@ def send_email_code_route():
             print(f"   SMTP_USERNAME: {os.environ.get('SMTP_USERNAME', 'NOT SET')}")
             print(f"   SMTP_PASSWORD: {'SET' if os.environ.get('SMTP_PASSWORD') else 'NOT SET'}")
             print(f"   FROM_EMAIL: {os.environ.get('FROM_EMAIL', 'NOT SET')}")
-            email_sent['status'] = 'failed'
-            email_sent['error'] = str(e)
+            email_result['status'] = 'failed'
+            email_result['error'] = str(e)
     
-    # Start email sending in background thread
-    email_thread = threading.Thread(target=send_email_async, daemon=True)
+    # Send email in thread with 15 second timeout
+    email_thread = threading.Thread(target=send_email_with_timeout, daemon=True)
     email_thread.start()
+    email_thread.join(timeout=15)  # Wait up to 15 seconds
     
-    # Return success - email is being sent in background
-    # Note: Check Render logs if email doesn't arrive
-    return jsonify({
-        'success': True, 
-        'message': f'Verification code is being sent to {email}. Please check your inbox and spam folder. If not received, check Render logs for errors.'
-    })
+    # Check result
+    if email_result['status'] is None:
+        # Still sending - return success but note it's in progress
+        return jsonify({
+            'success': True,
+            'message': f'Verification code is being sent to {email}. Please check your inbox and spam folder. If not received within a minute, check Render logs.',
+            'warning': 'Email sending is taking longer than expected. Check Render logs if not received.'
+        })
+    elif email_result['success']:
+        # Success!
+        return jsonify({
+            'success': True,
+            'message': f'Verification code sent successfully to {email}. Please check your inbox and spam folder.'
+        })
+    else:
+        # Failed - return error with code so user can still login
+        error_msg = email_result['error'] or 'Unknown error'
+        print(f"⚠️ Email failed but code is: {code} (for {username})")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to send email: {error_msg}. Your verification code is: {code}',
+            'code': code,  # Include code so user can still login
+            'message': f'Email sending failed. Your verification code is: {code}. Please use this code to login. Check Render logs for email errors.'
+        })
 
 
 # WebAuthn and Device Fingerprinting API Routes

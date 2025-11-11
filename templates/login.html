@@ -285,12 +285,16 @@ function sendEmailCode() {
             {# JavaScript variable: Builds message to show user #}
             let message = 'Verification code sent to ' + email + '\n\n';
             
-            {# If code is in response (email not configured), show it #}
+            {# If code is in response (email failed or not configured), show it #}
             if (data.code) {
                 message += 'Your verification code is: ' + data.code + '\n\n';
-                message += 'Note: Email service is not configured. Code shown above for testing.';
+                if (data.warning) {
+                    message += 'Warning: ' + data.warning;
+                } else {
+                    message += 'Note: Email service issue. Code shown above for testing.';
+                }
                 {# JavaScript DOM: Updates hint text to show code #}
-                document.getElementById('codeHint').textContent = 'Code: ' + data.code + ' (Email not configured)';
+                document.getElementById('codeHint').textContent = 'Code: ' + data.code + ' (Check email or use code above)';
             } else {
                 message += 'Check your email or terminal for the code.';
                 {# JavaScript DOM: Updates hint text to confirm code was sent #}
@@ -301,7 +305,14 @@ function sendEmailCode() {
             alert(message);
         } else {
             {# JavaScript alert: Shows error message if request failed #}
-            alert('Error: ' + (data.error || 'Failed to send code'));
+            let errorMsg = data.error || 'Failed to send code';
+            {# If code is provided in error, show it so user can still login #}
+            if (data.code) {
+                errorMsg += '\n\nYour verification code is: ' + data.code + '\n\nUse this code to login.';
+                {# JavaScript DOM: Updates hint text to show code #}
+                document.getElementById('codeHint').textContent = 'Code: ' + data.code + ' (Email failed)';
+            }
+            alert('Error: ' + errorMsg);
         }
     })
     {# Promise catch: Handles network errors or other exceptions #}
