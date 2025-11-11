@@ -96,7 +96,8 @@ from email_service import generate_verification_code, send_email_code
 # get_user_role: Retrieves user's role from database
 # normalize_username: Converts username to lowercase for case-insensitive matching
 # get_est_time: Gets current time in EST timezone
-from auth import log_login_attempt, role_required, admin_required, verify_user_role, get_user_role, normalize_username, get_est_time
+# get_utc_time: Gets current time in UTC timezone (timezone-agnostic, works for all users)
+from auth import log_login_attempt, role_required, admin_required, verify_user_role, get_user_role, normalize_username, get_est_time, get_utc_time
 
 
 # Python variable: Creates Flask application instance
@@ -345,15 +346,16 @@ def login():
             ).first()
             
             # Python conditional: Checks if verification code exists and is not expired
-            # verification exists AND expiration time is in the future (EST timezone)
-            # Get current time in EST (as naive datetime for comparison with database)
-            current_time_est = get_est_time()
+            # verification exists AND expiration time is in the future (UTC timezone)
+            # Get current time in UTC (as naive datetime for comparison with database)
+            # UTC is timezone-agnostic and works correctly for users in any timezone
+            current_time_utc = get_utc_time()
             # Convert to naive datetime for comparison (SQLite stores naive datetimes)
-            current_time_naive = current_time_est.replace(tzinfo=None)
+            current_time_naive = current_time_utc
             
             if verification:
-                # expires_at from database is naive datetime (SQLite doesn't store timezone)
-                # Compare both as naive datetimes (both should be in EST)
+                # expires_at from database is naive datetime stored in UTC (SQLite doesn't store timezone)
+                # Compare both as naive datetimes (both should be in UTC)
                 if verification.expires_at > current_time_naive:
                     # Python comment: Marks code usage marking section
                     # Mark code as used
@@ -490,11 +492,11 @@ def send_email_code_route():
     # Python variable: Generates random 6-digit verification code
     # generate_verification_code() returns string like '123456'
     code = generate_verification_code()
-    # Python variable: Calculates code expiration time (10 minutes from now) in EST
-    # get_est_time() gets current EST time, timedelta(minutes=10) adds 10 minutes
+    # Python variable: Calculates code expiration time (10 minutes from now) in UTC
+    # get_utc_time() gets current UTC time, timedelta(minutes=10) adds 10 minutes
+    # UTC is timezone-agnostic and works correctly for users in any timezone (Saskatoon, Thunder Bay, etc.)
     # Convert to naive datetime for database storage (SQLite doesn't store timezone)
-    expires_at_aware = get_est_time() + timedelta(minutes=10)
-    expires_at = expires_at_aware.replace(tzinfo=None)  # Store as naive datetime
+    expires_at = get_utc_time() + timedelta(minutes=10)  # Store as naive datetime in UTC
     
     # Python comment: Marks verification code storage section
     # Save verification code with the email from the form

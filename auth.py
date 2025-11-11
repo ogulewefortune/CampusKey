@@ -86,6 +86,17 @@ def get_est_time():
     return datetime.now(EST)
 
 
+def get_utc_time():
+    """
+    Get current time in UTC timezone.
+    UTC is timezone-agnostic and works correctly for users in any timezone.
+    
+    Returns:
+        datetime object in UTC timezone
+    """
+    return datetime.utcnow()
+
+
 def log_login_attempt(username, method, status, user_id=None):
     """
     Log a login attempt to the database.
