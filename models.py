@@ -445,3 +445,99 @@ class Grade(db.Model):
     # This allows: grade.professor (access User/professor who assigned the grade)
     # Used to get professor information from grade and identify who assigned each grade
     professor = db.relationship('User', foreign_keys=[professor_id])
+
+
+# WebAuthnCredential model - Stores WebAuthn (biometric) credentials for users
+# Inherits from db.Model to become a database table
+# Used for Face ID, Touch ID, Windows Hello, and other platform authenticators
+class WebAuthnCredential(db.Model):
+    # Primary key - Unique identifier for each credential record
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # User ID foreign key - Links to the User who owns this credential
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Credential ID - Unique identifier for this WebAuthn credential (base64 encoded)
+    # db.Text: Can store long credential IDs
+    # unique=True: Ensures no duplicate credentials
+    # nullable=False: Required field
+    credential_id = db.Column(db.Text, unique=True, nullable=False)
+    
+    # Public key - The public key portion of the credential (stored as JSON/text)
+    # db.Text: Stores the public key data
+    # nullable=False: Required field
+    public_key = db.Column(db.Text, nullable=False)
+    
+    # Counter - Anti-replay counter for WebAuthn
+    # db.Integer: Stores the signature count
+    # default=0: Starts at 0
+    counter = db.Column(db.Integer, default=0)
+    
+    # Device name - User-friendly name for the device (e.g., "iPhone 13", "MacBook Pro")
+    # db.String(100): Device name with max 100 characters
+    # nullable=True: Optional field
+    device_name = db.Column(db.String(100), nullable=True)
+    
+    # Created timestamp - When the credential was registered
+    # db.DateTime: Stores date and time values
+    # default=datetime.utcnow: Automatically sets to current UTC time when record is created
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Last used timestamp - When the credential was last used for authentication
+    # db.DateTime: Stores date and time values
+    # nullable=True: Can be None if never used
+    last_used_at = db.Column(db.DateTime, nullable=True)
+    
+    # Relationship to User model - Allows accessing User from WebAuthnCredential
+    user = db.relationship('User', backref=db.backref('webauthn_credentials', lazy=True))
+
+
+# DeviceFingerprint model - Stores device fingerprints for security tracking
+# Inherits from db.Model to become a database table
+# Used to detect device changes and enhance security
+class DeviceFingerprint(db.Model):
+    # Primary key - Unique identifier for each fingerprint record
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # User ID foreign key - Links to the User who owns this device
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Fingerprint hash - Unique hash of device characteristics
+    # db.String(64): SHA-256 hash (64 hex characters)
+    # unique=True: Ensures no duplicate fingerprints
+    # nullable=False: Required field
+    fingerprint_hash = db.Column(db.String(64), unique=True, nullable=False)
+    
+    # Device characteristics - JSON string of device attributes
+    # db.Text: Stores device information (browser, OS, screen, etc.)
+    # nullable=True: Optional field
+    device_info = db.Column(db.Text, nullable=True)
+    
+    # User agent - Browser user agent string
+    # db.Text: Can be long
+    # nullable=True: Optional field
+    user_agent = db.Column(db.Text, nullable=True)
+    
+    # IP address - IP address when fingerprint was created
+    # db.String(45): Supports IPv4 and IPv6
+    # nullable=True: Optional field
+    ip_address = db.Column(db.String(45), nullable=True)
+    
+    # Is trusted - Whether this device is trusted by the user
+    # db.Boolean: True if user has verified this device
+    # default=False: New devices start as untrusted
+    is_trusted = db.Column(db.Boolean, default=False)
+    
+    # Created timestamp - When the fingerprint was first recorded
+    # db.DateTime: Stores date and time values
+    # default=datetime.utcnow: Automatically sets to current UTC time when record is created
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Last seen timestamp - When this device was last seen
+    # db.DateTime: Stores date and time values
+    # default=datetime.utcnow: Automatically sets to current UTC time
+    # onupdate=datetime.utcnow: Updates automatically when record is modified
+    last_seen_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship to User model - Allows accessing User from DeviceFingerprint
+    user = db.relationship('User', backref=db.backref('device_fingerprints', lazy=True))

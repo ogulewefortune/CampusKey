@@ -9,12 +9,52 @@
 ### 1. Environment Variables
 Set these in your Render dashboard under your web service settings:
 
+**How to Access Environment Variables in Render:**
+
+1. **Log in to Render Dashboard**
+   - Go to [https://dashboard.render.com](https://dashboard.render.com)
+   - Sign in with your account
+
+2. **Navigate to Your Web Service**
+   - Click on "Services" in the left sidebar (or go to your dashboard)
+   - Find and click on your CAMPUSKEY web service
+
+3. **Open Environment Variables Section**
+   - In your service page, look for the "Environment" tab in the top menu
+   - OR scroll down to find the "Environment Variables" section
+   - Click on "Environment" or "Environment Variables"
+
+4. **Add/Edit Variables**
+   - You'll see a list of existing environment variables (if any)
+   - To add a new variable:
+     - Click "Add Environment Variable" or the "+" button
+     - Enter the variable name (e.g., `SMTP_PORT`)
+     - Enter the value (e.g., `465`)
+     - Click "Save Changes"
+   - To edit an existing variable:
+     - Click on the variable name or the edit icon
+     - Update the value
+     - Click "Save Changes"
+
+5. **After Making Changes**
+   - Render will automatically redeploy your service
+   - Wait for the deployment to complete (check the "Events" or "Logs" tab)
+
 **Required:**
 - `SECRET_KEY`: A secure random string (e.g., generate with: `python -c "import secrets; print(secrets.token_hex(32))"`)
 - `DATABASE_URL`: Automatically provided by Render if you add a PostgreSQL database
 
 **Email Configuration (REQUIRED for Email OTP to work):**
-To enable email OTP verification codes, you MUST set these environment variables:
+To enable email OTP verification codes, you MUST set these environment variables in Render:
+
+**Quick Checklist - Add these 5 environment variables:**
+- [ ] `SMTP_SERVER` = `smtp.gmail.com` (or your email provider's SMTP server)
+- [ ] `SMTP_PORT` = `465` (recommended for Render)
+- [ ] `SMTP_USERNAME` = `your-email@gmail.com` (your email address)
+- [ ] `SMTP_PASSWORD` = `your-app-password` (Gmail App Password, not regular password)
+- [ ] `FROM_EMAIL` = `your-email@gmail.com` (usually same as SMTP_USERNAME)
+
+**Detailed Configuration:**
 
 1. **`SMTP_SERVER`**: Your SMTP server
    - For Gmail: `smtp.gmail.com`
@@ -22,9 +62,10 @@ To enable email OTP verification codes, you MUST set these environment variables
    - For other providers: Check your email provider's SMTP settings
 
 2. **`SMTP_PORT`**: SMTP port number
-   - For Gmail with TLS: `587`
-   - For Gmail with SSL: `465`
-   - For Outlook: `587`
+   - **Recommended for Render**: `465` (SSL) - more reliable on cloud platforms
+   - For Gmail with TLS: `587` (may have network issues on Render)
+   - For Gmail with SSL: `465` (recommended)
+   - For Outlook: `587` or `465`
 
 3. **`SMTP_USERNAME`**: Your email address
    - Example: `your-email@gmail.com`
@@ -42,14 +83,16 @@ To enable email OTP verification codes, you MUST set these environment variables
 5. **`FROM_EMAIL`**: Sender email address (usually same as SMTP_USERNAME)
    - Example: `your-email@gmail.com`
 
-**Example for Gmail:**
+**Example for Gmail (Recommended for Render):**
 ```
 SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
+SMTP_PORT=465
 SMTP_USERNAME=your-email@gmail.com
 SMTP_PASSWORD=abcdefghijklmnop
 FROM_EMAIL=your-email@gmail.com
 ```
+
+**Note:** Port 465 (SSL) is recommended for Render deployments as it's more reliable than port 587 (TLS) on cloud platforms. The code will automatically try port 465 as a fallback if port 587 fails.
 
 **⚠️ Important Notes:**
 - Without these variables set, emails will NOT be sent (codes will only print to console/logs)
@@ -92,9 +135,29 @@ After deployment:
 - Database tables are created automatically on first run
 
 ### Email Not Sending
-- Verify SMTP environment variables are set
-- Check email service logs in Render dashboard
-- For Gmail, ensure you're using an App Password, not regular password
+
+**Common Error: "[Errno 101] Network is unreachable"**
+
+This error occurs when Render cannot connect to external SMTP servers. Solutions:
+
+1. **Use SSL Port (465) instead of TLS Port (587)**
+   - Change `SMTP_PORT` from `587` to `465` in Render environment variables
+   - SSL connections are more reliable on cloud platforms
+   - Example: `SMTP_PORT=465`
+
+2. **Verify SMTP Configuration**
+   - Ensure all SMTP environment variables are set correctly
+   - For Gmail, use an App Password (not regular password)
+   - Check email service logs in Render dashboard for detailed errors
+
+3. **Alternative: Use Cloud Email Services**
+   - Consider using SendGrid, Mailgun, or AWS SES for better cloud compatibility
+   - These services are designed for cloud platforms and have better reliability
+
+4. **Network Restrictions**
+   - Some Render regions may have network restrictions
+   - Try deploying to a different region if issues persist
+   - Contact Render support if SMTP ports are blocked in your region
 
 ### Build Failures
 - Check that all dependencies in `requirements.txt` are valid

@@ -205,15 +205,51 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
             msg.attach(part2)
             
             # Python object creation: Creates SMTP connection to email server
-            # smtplib.SMTP() connects to SMTP server on specified port
-            # timeout=10 sets 10-second timeout for connection
-            server = smtplib.SMTP(smtp_server, smtp_port, timeout=10)
-            # Python method call: Starts TLS encryption for secure connection
-            # starttls() upgrades connection to encrypted TLS
-            server.starttls()
-            # Python method call: Authenticates with SMTP server using credentials
-            # login() sends username and password to server
-            server.login(smtp_username, smtp_password)
+            # Try SSL connection first (port 465), then fall back to TLS (port 587)
+            # This handles Render's network restrictions better
+            server = None
+            connection_error = None
+            
+            # Try connecting with the configured port
+            try:
+                if smtp_port == 465:
+                    # Python object creation: Creates SSL SMTP connection for port 465
+                    # smtplib.SMTP_SSL() creates encrypted connection directly
+                    # timeout=30 sets 30-second timeout for connection (longer for cloud environments)
+                    server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=30)
+                    # Python method call: Authenticates with SMTP server using credentials
+                    # login() sends username and password to server
+                    server.login(smtp_username, smtp_password)
+                else:
+                    # Python object creation: Creates SMTP connection for TLS (port 587)
+                    # smtplib.SMTP() connects to SMTP server on specified port
+                    # timeout=30 sets 30-second timeout for connection (longer for cloud environments)
+                    server = smtplib.SMTP(smtp_server, smtp_port, timeout=30)
+                    # Python method call: Starts TLS encryption for secure connection
+                    # starttls() upgrades connection to encrypted TLS
+                    server.starttls()
+                    # Python method call: Authenticates with SMTP server using credentials
+                    # login() sends username and password to server
+                    server.login(smtp_username, smtp_password)
+            except (OSError, ConnectionError, TimeoutError) as e:
+                # Python comment: Catches network connection errors
+                # If TLS port 587 fails, try SSL port 465 as fallback
+                connection_error = e
+                if smtp_port == 587:
+                    # Python print statement: Logs fallback attempt
+                    print(f" TLS connection failed, trying SSL on port 465...")
+                    try:
+                        # Python object creation: Retry with SSL connection
+                        server = smtplib.SMTP_SSL(smtp_server, 465, timeout=30)
+                        server.login(smtp_username, smtp_password)
+                        # Python print statement: Logs successful fallback
+                        print(f" SSL connection successful on port 465")
+                    except Exception as ssl_error:
+                        # Python raise statement: Re-raises with both errors
+                        raise Exception(f"Both TLS (port 587) and SSL (port 465) connections failed. TLS error: {e}, SSL error: {ssl_error}")
+                else:
+                    # Python raise statement: Re-raises original error if not port 587
+                    raise
             # Python method call: Converts email message to string format
             # as_string() serializes the MIME message for sending
             text = msg.as_string()

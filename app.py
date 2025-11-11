@@ -29,6 +29,15 @@ import os
 # timedelta: Calculates time differences (e.g., code expiration times)
 from datetime import datetime, timedelta
 
+# Python import statements for WebAuthn and device fingerprinting
+import base64
+import json
+import hashlib
+import secrets
+from webauthn import generate_registration_options, verify_registration_response, generate_authentication_options, verify_authentication_response
+from webauthn.helpers.structs import PublicKeyCredentialDescriptor, AuthenticatorSelection, UserVerificationRequirement, AuthenticatorAttachment
+from webauthn.helpers.cose import COSEAlgorithmIdentifier
+
 
 # Python import statement: Imports Config class from config.py module
 # Config contains all Flask application configuration settings
@@ -40,7 +49,9 @@ from config import Config
 # EmailVerificationCode: Database model for storing email verification codes
 # Course: Database model representing academic courses
 # Grade: Database model representing student grades
-from models import db, User, EmailVerificationCode, Course, Grade
+# WebAuthnCredential: Database model for WebAuthn biometric credentials
+# DeviceFingerprint: Database model for device fingerprinting
+from models import db, User, EmailVerificationCode, Course, Grade, WebAuthnCredential, DeviceFingerprint
 
 # Python import statement: Imports email service functions from email_service.py
 # generate_verification_code: Creates random 6-digit verification codes
@@ -65,6 +76,57 @@ app = Flask(__name__)
 # Python method call: Loads configuration from Config class
 # app.config.from_object() applies all settings from Config class to Flask app
 app.config.from_object(Config)
+
+# WebAuthn configuration - Get origin URL for WebAuthn (required for security)
+# In production (Render), use the Render URL, otherwise use localhost
+def get_webauthn_origin():
+    """Get the origin URL for WebAuthn based on environment"""
+    # Check for Render external URL first
+    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+    if render_url:
+        # Ensure it has https://
+        if not render_url.startswith('http'):
+            render_url = 'https://' + render_url
+        return render_url
+    
+    # Check for custom WEBAUTHN_ORIGIN
+    custom_origin = os.environ.get('WEBAUTHN_ORIGIN')
+    if custom_origin:
+        return custom_origin
+    
+    # Fallback: try to get from request (for development)
+    try:
+        from flask import has_request_context
+        if has_request_context() and request:
+            scheme = 'https' if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https' else 'http'
+            return f"{scheme}://{request.host}"
+    except:
+        pass
+    
+    # Final fallback
+    return 'http://localhost:5001'
+
+# WebAuthn Relying Party configuration
+# For Render: Extract domain from RENDER_EXTERNAL_URL or set WEBAUTHN_RP_ID env var
+def get_rp_id():
+    """Get the Relying Party ID for WebAuthn"""
+    # Check for custom RP_ID
+    custom_rp_id = os.environ.get('WEBAUTHN_RP_ID')
+    if custom_rp_id:
+        return custom_rp_id
+    
+    # Try to extract from Render URL
+    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+    if render_url:
+        # Remove protocol and path, keep only domain
+        domain = render_url.replace('https://', '').replace('http://', '').split('/')[0]
+        return domain
+    
+    # Fallback to localhost for development
+    return 'localhost'
+
+RP_ID = get_rp_id()
+RP_NAME = "CAMPUSKEY"
 
 
 # Python comment: Marks extension initialization section
@@ -448,67 +510,350 @@ def send_email_code_route():
         return jsonify({'success': False, 'error': f'Failed to send email: {str(e)}'}), 500
 
 
-# Python decorator: Registers API route for biometric authentication
-# '/api/biometric-login' is the API endpoint URL
-# methods=['POST'] restricts to POST requests only
+# WebAuthn and Device Fingerprinting API Routes
+
+# Helper function to create device fingerprint hash
+def create_device_fingerprint(device_info, user_agent, ip_address):
+    """Create a hash from device characteristics"""
+    fingerprint_string = json.dumps({
+        'device_info': device_info,
+        'user_agent': user_agent,
+        'ip': ip_address
+    }, sort_keys=True)
+    return hashlib.sha256(fingerprint_string.encode()).hexdigest()
+
+# Helper function to store or update device fingerprint
+def store_device_fingerprint(user_id, fingerprint_hash, device_info, user_agent, ip_address):
+    """Store or update device fingerprint"""
+    try:
+        fingerprint = DeviceFingerprint.query.filter_by(
+            user_id=user_id,
+            fingerprint_hash=fingerprint_hash
+        ).first()
+        
+        if fingerprint:
+            # Update last seen timestamp
+            fingerprint.last_seen_at = get_est_time()
+            fingerprint.device_info = json.dumps(device_info) if device_info else None
+        else:
+            # Create new fingerprint
+            fingerprint = DeviceFingerprint(
+                user_id=user_id,
+                fingerprint_hash=fingerprint_hash,
+                device_info=json.dumps(device_info) if device_info else None,
+                user_agent=user_agent,
+                ip_address=ip_address,
+                is_trusted=False  # New devices start as untrusted
+            )
+            db.session.add(fingerprint)
+        
+        db.session.commit()
+        return fingerprint
+    except Exception as e:
+        print(f"Error storing device fingerprint: {e}")
+        db.session.rollback()
+        return None
+
+
+# WebAuthn Registration - Start registration process
+@app.route('/api/webauthn/register/begin', methods=['POST'])
+@login_required
+def webauthn_register_begin():
+    """Start WebAuthn registration process"""
+    try:
+        username = normalize_username(current_user.username)
+        user = User.query.filter_by(username=username).first()
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        # Get existing credentials for this user
+        existing_credentials = WebAuthnCredential.query.filter_by(user_id=user.id).all()
+        existing_credential_ids = [base64.b64decode(cred.credential_id) for cred in existing_credentials]
+        
+        # Generate registration options
+        origin = get_webauthn_origin()
+        registration_options = generate_registration_options(
+            rp_id=RP_ID,
+            rp_name=RP_NAME,
+            user_id=user.username.encode(),
+            user_name=user.username,
+            user_display_name=user.username,
+            exclude_credentials=[
+                PublicKeyCredentialDescriptor(id=cred_id) for cred_id in existing_credential_ids
+            ],
+            authenticator_selection=AuthenticatorSelection(
+                authenticator_attachment=AuthenticatorAttachment.PLATFORM,  # Prefer platform authenticators (Face ID, Touch ID)
+                user_verification=UserVerificationRequirement.REQUIRED
+            ),
+        )
+        
+        # Store challenge in session
+        session['webauthn_challenge'] = base64.b64encode(registration_options.challenge).decode()
+        session['webauthn_user_id'] = user.id
+        
+        return jsonify({
+            'success': True,
+            'options': registration_options.model_dump()
+        })
+    except Exception as e:
+        print(f"WebAuthn registration begin error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# WebAuthn Registration - Complete registration
+@app.route('/api/webauthn/register/complete', methods=['POST'])
+@login_required
+def webauthn_register_complete():
+    """Complete WebAuthn registration"""
+    try:
+        data = request.get_json()
+        credential = data.get('credential')
+        device_name = data.get('device_name', 'Unknown Device')
+        
+        if not credential:
+            return jsonify({'success': False, 'error': 'Credential data required'}), 400
+        
+        # Get challenge from session
+        challenge = session.get('webauthn_challenge')
+        user_id = session.get('webauthn_user_id')
+        
+        if not challenge or not user_id:
+            return jsonify({'success': False, 'error': 'Registration session expired'}), 400
+        
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        # Verify registration response
+        origin = get_webauthn_origin()
+        verification = verify_registration_response(
+            credential=credential,
+            expected_challenge=base64.b64decode(challenge),
+            expected_origin=origin,
+            expected_rp_id=RP_ID,
+        )
+        
+        # Store credential in database
+        credential_record = WebAuthnCredential(
+            user_id=user.id,
+            credential_id=base64.b64encode(verification.credential_id).decode(),
+            public_key=json.dumps(verification.credential_public_key),
+            counter=verification.sign_count,
+            device_name=device_name
+        )
+        
+        db.session.add(credential_record)
+        db.session.commit()
+        
+        # Clear session
+        session.pop('webauthn_challenge', None)
+        session.pop('webauthn_user_id', None)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Biometric credential registered successfully'
+        })
+    except Exception as e:
+        print(f"WebAuthn registration complete error: {e}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# WebAuthn Authentication - Start authentication
+@app.route('/api/webauthn/authenticate/begin', methods=['POST'])
+def webauthn_authenticate_begin():
+    """Start WebAuthn authentication"""
+    try:
+        data = request.get_json()
+        username_input = data.get('username')
+        
+        if not username_input:
+            return jsonify({'success': False, 'error': 'Username is required'}), 400
+        
+        username = normalize_username(username_input)
+        user = User.query.filter_by(username=username).first()
+        
+        if not user:
+            log_login_attempt(username, 'biometric', 'failed', user_id=None)
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        # Get user's credentials
+        credentials = WebAuthnCredential.query.filter_by(user_id=user.id).all()
+        if not credentials:
+            return jsonify({'success': False, 'error': 'No biometric credentials registered'}), 404
+        
+        # Prepare credential descriptors
+        allow_credentials = [
+            PublicKeyCredentialDescriptor(id=base64.b64decode(cred.credential_id))
+            for cred in credentials
+        ]
+        
+        # Generate authentication options
+        origin = get_webauthn_origin()
+        authentication_options = generate_authentication_options(
+            rp_id=RP_ID,
+            allow_credentials=allow_credentials,
+            user_verification=UserVerificationRequirement.REQUIRED,
+        )
+        
+        # Store challenge and user info in session
+        session['webauthn_challenge'] = base64.b64encode(authentication_options.challenge).decode()
+        session['webauthn_user_id'] = user.id
+        
+        return jsonify({
+            'success': True,
+            'options': authentication_options.model_dump()
+        })
+    except Exception as e:
+        print(f"WebAuthn authenticate begin error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# WebAuthn Authentication - Complete authentication
+@app.route('/api/webauthn/authenticate/complete', methods=['POST'])
+def webauthn_authenticate_complete():
+    """Complete WebAuthn authentication"""
+    try:
+        data = request.get_json()
+        credential = data.get('credential')
+        device_info = data.get('device_info', {})
+        
+        if not credential:
+            return jsonify({'success': False, 'error': 'Credential data required'}), 400
+        
+        # Get challenge and user from session
+        challenge = session.get('webauthn_challenge')
+        user_id = session.get('webauthn_user_id')
+        
+        if not challenge or not user_id:
+            return jsonify({'success': False, 'error': 'Authentication session expired'}), 400
+        
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        # Find the credential
+        credential_id_b64 = credential.get('id')
+        credential_record = WebAuthnCredential.query.filter_by(
+            user_id=user.id,
+            credential_id=credential_id_b64
+        ).first()
+        
+        if not credential_record:
+            log_login_attempt(user.username, 'biometric', 'failed', user.id)
+            return jsonify({'success': False, 'error': 'Invalid credential'}), 401
+        
+        # Verify authentication response
+        origin = get_webauthn_origin()
+        public_key = json.loads(credential_record.public_key)
+        
+        verification = verify_authentication_response(
+            credential=credential,
+            expected_challenge=base64.b64decode(challenge),
+            expected_origin=origin,
+            expected_rp_id=RP_ID,
+            credential_public_key=public_key,
+            credential_current_sign_count=credential_record.counter,
+        )
+        
+        # Update credential counter and last used
+        credential_record.counter = verification.new_sign_count
+        credential_record.last_used_at = get_est_time()
+        db.session.commit()
+        
+        # Store device fingerprint
+        user_agent = request.headers.get('User-Agent', '')
+        ip_address = request.remote_addr
+        fingerprint_hash = create_device_fingerprint(device_info, user_agent, ip_address)
+        store_device_fingerprint(user.id, fingerprint_hash, device_info, user_agent, ip_address)
+        
+        # Log in the user
+        login_user(user)
+        log_login_attempt(user.username, 'biometric', 'success', user.id)
+        session['auth_method'] = 'biometric'
+        session['login_time'] = get_est_time().isoformat()
+        session['user_role'] = user.role
+        
+        # Clear session
+        session.pop('webauthn_challenge', None)
+        session.pop('webauthn_user_id', None)
+        
+        # Determine redirect URL
+        if user.role == 'admin':
+            redirect_url = url_for('admin_dashboard')
+        elif user.role == 'professor':
+            redirect_url = url_for('professor_dashboard')
+        else:
+            redirect_url = url_for('student_dashboard')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Biometric authentication successful',
+            'redirect': redirect_url
+        })
+    except Exception as e:
+        print(f"WebAuthn authenticate complete error: {e}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        username = session.get('webauthn_user_id')
+        if username:
+            user = User.query.get(username)
+            if user:
+                log_login_attempt(user.username, 'biometric', 'failed', user.id)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# Device Fingerprint API - Store fingerprint
+@app.route('/api/device-fingerprint', methods=['POST'])
+@login_required
+def store_fingerprint():
+    """Store device fingerprint for current user"""
+    try:
+        data = request.get_json()
+        device_info = data.get('device_info', {})
+        
+        user_agent = request.headers.get('User-Agent', '')
+        ip_address = request.remote_addr
+        
+        fingerprint_hash = create_device_fingerprint(device_info, user_agent, ip_address)
+        fingerprint = store_device_fingerprint(
+            current_user.id,
+            fingerprint_hash,
+            device_info,
+            user_agent,
+            ip_address
+        )
+        
+        if fingerprint:
+            return jsonify({
+                'success': True,
+                'fingerprint_id': fingerprint.id,
+                'is_trusted': fingerprint.is_trusted
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Failed to store fingerprint'}), 500
+    except Exception as e:
+        print(f"Device fingerprint error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# Legacy biometric login endpoint (kept for backward compatibility)
 @app.route('/api/biometric-login', methods=['POST'])
-# Python function definition: Biometric login API endpoint handler
 def biometric_login():
-    # Python docstring: Documents that this is simulated biometric authentication
-    """Simulated biometric authentication"""
-    # Python variable: Parses JSON data from request body
-    data = request.get_json()
-    # Python variable: Extracts username from JSON data
-    username_input = data.get('username')
-    
-    # Python conditional: Validates username is provided
-    if not username_input:
-        # Python return statement: Returns JSON error response with 400 status code
-        return jsonify({'success': False, 'error': 'Username is required'}), 400
-    
-    # Normalize username to lowercase for case-insensitive matching
-    username = normalize_username(username_input)
-    
-    # Python variable: Queries database for user with matching username
-    user = User.query.filter_by(username=username).first()
-    # Python conditional: Checks if user was not found
-    if not user:
-        # Log failed login attempt - wrong username
-        log_login_attempt(username, 'biometric', 'failed', user_id=None)
-        # Python return statement: Returns JSON error response with 404 status code
-        return jsonify({'success': False, 'error': 'User not found'}), 404
-    
-    # Python comment: Marks simulated authentication section
-    # Simulate biometric authentication (always succeeds for demo)
-    # Python function call: Logs in the user (simulated success)
-    login_user(user)
-    # Python function call: Records successful biometric login attempt
-    log_login_attempt(username, 'biometric', 'success', user.id)
-    # Python dictionary assignment: Stores biometric auth method in session
-    session['auth_method'] = 'biometric'
-    # Python dictionary assignment: Stores login timestamp (EST timezone)
-    session['login_time'] = get_est_time().isoformat()
-    # Python dictionary assignment: Stores user role in session
-    session['user_role'] = user.role  # Store role in session
-    
-    # Python comment: Marks redirect URL determination section
-    # Determine redirect URL based on role
-    # Python conditional: Checks if user is admin
-    if user.role == 'admin':
-        # Python variable: Generates URL for admin dashboard
-        redirect_url = url_for('admin_dashboard')
-    # Python elif clause: Checks if user is professor
-    elif user.role == 'professor':
-        # Python variable: Generates URL for professor dashboard
-        redirect_url = url_for('professor_dashboard')
-    # Python else clause: Default case (student)
-    else:
-        # Python variable: Generates URL for student dashboard
-        redirect_url = url_for('student_dashboard')
-    
-    # Python return statement: Returns JSON success response with redirect URL
-    # Includes success message and redirect URL for frontend to use
-    return jsonify({'success': True, 'message': 'Biometric authentication successful', 'redirect': redirect_url})
+    """Legacy endpoint - redirects to WebAuthn"""
+    return jsonify({
+        'success': False,
+        'error': 'Please use WebAuthn authentication endpoints',
+        'message': 'Use /api/webauthn/authenticate/begin to start authentication'
+    }), 400
 
 
 # Python decorator: Registers API route for RFID card authentication
@@ -1327,6 +1672,16 @@ def check_role(username):
         }), 404
 
 
+
+
+# Python decorator: Registers route handler for '/register-biometric' URL
+@app.route('/register-biometric')
+@login_required
+def register_biometric():
+    """Page for registering biometric credentials"""
+    # Get user's existing credentials
+    credentials = WebAuthnCredential.query.filter_by(user_id=current_user.id).all()
+    return render_template('register_biometric.html', credentials=credentials)
 
 
 # Python decorator: Registers route handler for '/logout' URL

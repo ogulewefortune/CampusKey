@@ -124,15 +124,15 @@
                 
                 {# Alternative auth buttons container: Flex container for biometric and RFID buttons #}
                 <div class="alt-auth-buttons">
-                    {# Biometric button: Button for face recognition authentication #}
-                    <button type="button" class="btn-alt-auth btn-biometric" onclick="simulateBiometric()">
+                    {# Biometric button: Button for Face ID/Touch ID authentication #}
+                    <button type="button" class="btn-alt-auth btn-biometric" id="biometricBtn" onclick="handleBiometricLogin()">
                         {# SVG user icon: Person icon representing biometric/face recognition #}
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             {# SVG path: Draws person silhouette with head and body #}
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
                         </svg>
-                        {# Button text: "Face Recognition" label #}
-                        Face Recognition
+                        {# Button text: "Face ID / Touch ID" label #}
+                        <span id="biometricBtnText">Face ID / Touch ID</span>
                     </button>
                     
                     {# RFID button: Button for RFID card authentication #}
@@ -165,8 +165,65 @@
     </div>
 </div>
 
+{# HTML script tag: Loads WebAuthn and device fingerprinting JavaScript #}
+<script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
+
 {# HTML script tag: Begins embedded JavaScript for login form functionality #}
 <script>
+{# JavaScript function: Handles biometric login with WebAuthn #}
+async function handleBiometricLogin() {
+    const username = document.getElementById('username').value;
+    
+    if (!username) {
+        alert('Please enter your username first');
+        return;
+    }
+    
+    const btn = document.getElementById('biometricBtn');
+    const btnText = document.getElementById('biometricBtnText');
+    const originalText = btnText.textContent;
+    
+    btn.disabled = true;
+    btnText.textContent = 'Authenticating...';
+    
+    try {
+        const result = await startWebAuthnAuthentication(username);
+        
+        if (result.success) {
+            // Store device fingerprint after successful login
+            await storeDeviceFingerprint();
+            
+            alert('Biometric authentication successful!\n\nRedirecting to dashboard...');
+            if (result.redirect) {
+                window.location.href = result.redirect;
+            } else {
+                window.location.href = '/dashboard';
+            }
+        } else {
+            alert('Error: ' + result.error);
+            btn.disabled = false;
+            btnText.textContent = originalText;
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+        btn.disabled = false;
+        btnText.textContent = originalText;
+    }
+}
+
+// Check WebAuthn availability on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    const biometricBtn = document.getElementById('biometricBtn');
+    if (biometricBtn) {
+        const available = await isPlatformAuthenticatorAvailable();
+        if (!available) {
+            biometricBtn.disabled = true;
+            biometricBtn.title = 'Biometric authentication not available on this device';
+            document.getElementById('biometricBtnText').textContent = 'Biometric Not Available';
+        }
+    }
+});
+
 {# JavaScript function: Sends email verification code to user's email address #}
 function sendEmailCode() {
     {# JavaScript variable: Gets username value from username input field #}
@@ -237,50 +294,6 @@ function sendEmailCode() {
     });
 }
 
-{# JavaScript function: Simulates biometric authentication (face recognition) #}
-function simulateBiometric() {
-    {# JavaScript variable: Gets username value from username input field #}
-    const username = document.getElementById('username').value;
-    
-    {# JavaScript conditional: Validates that username is not empty #}
-    if (!username) {
-        {# JavaScript alert: Shows error if username is missing #}
-        alert('Please enter your username first');
-        {# JavaScript return: Exits function early if validation fails #}
-        return;
-    }
-    
-    {# JavaScript fetch: Sends POST request to biometric login API endpoint #}
-    fetch('/api/biometric-login', {
-        method: 'POST',         /* HTTP method is POST */
-        headers: {              /* Sets request headers */
-            'Content-Type': 'application/json', /* Indicates JSON payload */
-        },
-        body: JSON.stringify({  /* Converts JavaScript object to JSON string */
-            username: username  /* Includes username in request */
-        })
-    })
-    {# Promise handler: Converts response to JSON format #}
-    .then(response => response.json())
-    {# Promise handler: Processes the JSON data returned from server #}
-    .then(data => {
-        {# JavaScript conditional: Checks if biometric authentication was successful #}
-        if (data.success) {
-            {# JavaScript alert: Shows success message #}
-            alert('Biometric authentication successful!\n\nRedirecting to dashboard...');
-            {# JavaScript window.location: Redirects browser to dashboard page #}
-            window.location.href = '/dashboard';
-        } else {
-            {# JavaScript alert: Shows error message if authentication failed #}
-            alert('Error: ' + (data.error || 'Biometric authentication failed'));
-        }
-    })
-    {# Promise catch: Handles network errors or other exceptions #}
-    .catch(error => {
-        {# JavaScript alert: Shows error message if fetch fails #}
-        alert('Error: ' + error);
-    });
-}
 
 {# JavaScript function: Simulates RFID card authentication #}
 function simulateRFID() {

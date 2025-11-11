@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 50px auto; padding: 20px;">
+    <h1>Register Biometric Authentication</h1>
+    <p>Register your device's Face ID, Touch ID, or Windows Hello for quick and secure login.</p>
+    
+    <div id="statusMessage" style="margin: 20px 0; padding: 15px; border-radius: 5px; display: none;"></div>
+    
+    <div style="margin: 30px 0;">
+        <h3>Your Registered Devices</h3>
+        {% if credentials %}
+        <ul style="list-style: none; padding: 0;">
+            {% for cred in credentials %}
+            <li style="padding: 10px; margin: 10px 0; background: #f5f5f5; border-radius: 5px;">
+                <strong>{{ cred.device_name or 'Unknown Device' }}</strong><br>
+                Registered: {{ cred.created_at.strftime('%B %d, %Y') }}<br>
+                {% if cred.last_used_at %}
+                Last used: {{ cred.last_used_at.strftime('%B %d, %Y at %I:%M %p') }}
+                {% else %}
+                Never used
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No biometric credentials registered yet.</p>
+        {% endif %}
+    </div>
+    
+    <div style="margin: 30px 0;">
+        <h3>Register New Device</h3>
+        <p>Click the button below to register this device's biometric authentication.</p>
+        <button id="registerBtn" class="btn-login" onclick="registerBiometric()" style="margin-top: 20px;">
+            Register Face ID / Touch ID
+        </button>
+    </div>
+    
+    <div style="margin-top: 40px;">
+        <a href="{{ url_for('dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
+<script>
+async function registerBiometric() {
+    const btn = document.getElementById('registerBtn');
+    const statusDiv = document.getElementById('statusMessage');
+    
+    btn.disabled = true;
+    btn.textContent = 'Registering...';
+    statusDiv.style.display = 'none';
+    
+    try {
+        // Get device name
+        const deviceName = getDeviceName();
+        
+        const result = await startWebAuthnRegistration(deviceName);
+        
+        if (result.success) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#d4edda';
+            statusDiv.style.color = '#155724';
+            statusDiv.style.border = '1px solid #c3e6cb';
+            statusDiv.textContent = '✓ ' + result.message + ' You can now use Face ID/Touch ID to log in.';
+            btn.textContent = 'Register Face ID / Touch ID';
+            
+            // Reload page after 2 seconds to show new credential
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.style.border = '1px solid #f5c6cb';
+            statusDiv.textContent = '✗ Error: ' + result.error;
+            btn.disabled = false;
+            btn.textContent = 'Register Face ID / Touch ID';
+        }
+    } catch (error) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.backgroundColor = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+        statusDiv.style.border = '1px solid #f5c6cb';
+        statusDiv.textContent = '✗ Error: ' + error.message;
+        btn.disabled = false;
+        btn.textContent = 'Register Face ID / Touch ID';
+    }
+}
+
+// Check availability on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    const registerBtn = document.getElementById('registerBtn');
+    const available = await isPlatformAuthenticatorAvailable();
+    
+    if (!available) {
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Biometric Not Available';
+        registerBtn.title = 'Face ID/Touch ID is not available on this device';
+        
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.style.display = 'block';
+        statusDiv.style.backgroundColor = '#fff3cd';
+        statusDiv.style.color = '#856404';
+        statusDiv.style.border = '1px solid #ffeaa7';
+        statusDiv.textContent = '⚠ Biometric authentication is not available on this device. Please use a device with Face ID, Touch ID, or Windows Hello.';
+    }
+});
+</script>
+{% endblock %}
+
