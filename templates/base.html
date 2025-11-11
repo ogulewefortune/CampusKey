@@ -21,6 +21,16 @@
     <!-- Top Header Bar -->
     {# HTML header element: Fixed top navigation bar with logo and user info #}
     <header class="top-header">
+        {# Mobile menu toggle button: Shows/hides sidebar on mobile devices #}
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        {# Sidebar overlay: Dark overlay behind sidebar on mobile #}
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
         {# Header left section: Contains logo and site title #}
         <div class="header-left">
             {# Logo container: Square div containing SVG logo icon #}
@@ -340,3 +350,5 @@
 
     {# Script tag: Links to external JavaScript file using Flask's url_for #}
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    {# Mobile menu script: Handles mobile sidebar toggle functionality #}
+    <script src="{{ url_for('static', filename='js/mobile-menu.js') }}"></script>
