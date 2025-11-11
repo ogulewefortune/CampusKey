@@ -4,14 +4,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.querySelector('.sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     
+    // Debug logging (can be removed in production)
+    console.log('Mobile menu elements:', {
+        toggle: mobileMenuToggle,
+        sidebar: sidebar,
+        overlay: sidebarOverlay
+    });
+    
     if (mobileMenuToggle && sidebar) {
-        // Toggle sidebar
+        // Toggle sidebar when hamburger button is clicked
         mobileMenuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
             e.stopPropagation();
+            
+            // Toggle active class on sidebar
             sidebar.classList.toggle('active');
+            
+            // Toggle active class on overlay
             if (sidebarOverlay) {
                 sidebarOverlay.classList.toggle('active');
             }
+            
             // Prevent body scroll when menu is open
             if (sidebar.classList.contains('active')) {
                 document.body.style.overflow = 'hidden';

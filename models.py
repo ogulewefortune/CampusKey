@@ -1,3 +1,31 @@
+# ------------------------------------------------------------------------------------
+# models.py
+#
+# Copyright (c) 2025 CampusKey. All rights reserved
+# Description:
+# This Python code is part of a software application developed for CampusKey
+# University Access System. It includes functionality for database models including
+# User, EmailVerificationCode, Course, Grade, WebAuthnCredential, and DeviceFingerprint.
+#
+# Related Documents:
+#    Specification Document
+#    Design Document
+#
+# Disclaimer:
+# This code is provided as-is, without any warranty or support. Use it at your
+# own risk. The author and CampusKey shall not be liable for any damages or
+# issues arising from the use of this code.
+#
+# File created on 11/11/2025
+#
+# Associated files:
+# ------------------
+#    app.py - Main Flask application that uses these models
+#    config.py - Configuration settings for database connection
+#    auth.py - Authentication utilities that use User model
+#
+# ------------------------------------------------------------------------------------
+
 # Import SQLAlchemy - Flask extension for database ORM (Object-Relational Mapping)
 # SQLAlchemy allows us to interact with databases using Python objects instead of SQL queries
 from flask_sqlalchemy import SQLAlchemy

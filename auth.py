@@ -1,11 +1,62 @@
+# ------------------------------------------------------------------------------------
+# auth.py
+#
+# Copyright (c) 2025 CampusKey. All rights reserved
+# Description:
+# This Python code is part of a software application developed for CampusKey
+# University Access System. It includes functionality for authentication utilities
+# including login attempt logging, role-based access control, and user management.
+#
+# Related Documents:
+#    Specification Document
+#    Design Document
+#
+# Disclaimer:
+# This code is provided as-is, without any warranty or support. Use it at your
+# own risk. The author and CampusKey shall not be liable for any damages or
+# issues arising from the use of this code.
+#
+# File created on 11/11/2025
+#
+# Associated files:
+# ------------------
+#    app.py - Main Flask application that uses these authentication utilities
+#    models.py - Database models used for authentication
+#
+# ------------------------------------------------------------------------------------
+
+# Python import statement: Imports Flask request, session, and abort utilities
+# request: Access HTTP request data
+# session: Server-side session storage
+# abort: Raise HTTP exceptions
 from flask import request, session, abort
+
+# Python import statement: Imports wraps decorator from functools
+# wraps: Preserves function metadata when creating decorators
 from functools import wraps
+
+# Python import statement: Imports current_user from Flask-Login
+# current_user: Proxy object representing logged-in user
 from flask_login import current_user
+
+# Python import statement: Imports database models and db instance
+# LoginAttempt: Model for logging login attempts
+# ActiveSession: Model for tracking active user sessions
+# User: User model for authentication
+# db: SQLAlchemy database instance
 from models import LoginAttempt, ActiveSession, User, db
+
+# Python import statement: Imports datetime and timedelta classes
+# datetime: For creating timestamps
+# timedelta: For calculating time differences
 from datetime import datetime, timedelta
+
+# Python import statement: Imports pytz module for timezone handling
+# pytz: Provides timezone-aware datetime objects
 import pytz
 
-# EST timezone
+# EST timezone constant: US Eastern timezone for logging and time calculations
+# EST: Eastern Standard Time timezone object
 EST = pytz.timezone('US/Eastern')
 
 

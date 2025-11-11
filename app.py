@@ -1,3 +1,33 @@
+# ------------------------------------------------------------------------------------
+# app.py
+#
+# Copyright (c) 2025 CampusKey. All rights reserved
+# Description:
+# This Python code is part of a software application developed for CampusKey
+# University Access System. It includes functionality for web application routes,
+# authentication, user management, course management, and WebAuthn biometric
+# authentication.
+#
+# Related Documents:
+#    Specification Document
+#    Design Document
+#
+# Disclaimer:
+# This code is provided as-is, without any warranty or support. Use it at your
+# own risk. The author and CampusKey shall not be liable for any damages or
+# issues arising from the use of this code.
+#
+# File created on 11/11/2025
+#
+# Associated files:
+# ------------------
+#    models.py - Database models
+#    config.py - Configuration settings
+#    auth.py - Authentication utilities
+#    email_service.py - Email sending functionality
+#
+# ------------------------------------------------------------------------------------
+
 # Python import statement: Imports Flask class and utility functions from Flask framework
 # Flask: Main application class for creating web application
 # render_template: Renders HTML templates with Jinja2

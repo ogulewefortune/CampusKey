@@ -1,3 +1,30 @@
+# ------------------------------------------------------------------------------------
+# config.py
+#
+# Copyright (c) 2025 CampusKey. All rights reserved
+# Description:
+# This Python code is part of a software application developed for CampusKey
+# University Access System. It includes functionality for application configuration
+# settings including database connection, secret keys, and environment variables.
+#
+# Related Documents:
+#    Specification Document
+#    Design Document
+#
+# Disclaimer:
+# This code is provided as-is, without any warranty or support. Use it at your
+# own risk. The author and CampusKey shall not be liable for any damages or
+# issues arising from the use of this code.
+#
+# File created on 11/11/2025
+#
+# Associated files:
+# ------------------
+#    app.py - Main Flask application that uses this configuration
+#    models.py - Database models that use database configuration
+#
+# ------------------------------------------------------------------------------------
+
 # Python import statement: Imports the os module for accessing environment variables
 # os.environ allows reading configuration values from system environment variables
 # This is a security best practice - keeps sensitive data out of source code
