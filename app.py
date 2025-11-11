@@ -487,11 +487,24 @@ def send_email_code_route():
     def send_email_async():
         """Send email in background thread"""
         try:
-            send_email_code(email, code, username)
+            result = send_email_code(email, code, username)
+            if result:
+                print(f"✅ Email sent successfully to {email}")
+            else:
+                print(f"⚠️ Email service returned False for {email}")
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
-            print(f"❌ Error sending email in background: {error_details}")
+            # Log detailed error for debugging in Render logs
+            print(f"❌ ERROR SENDING EMAIL TO {email}:")
+            print(f"   Error: {str(e)}")
+            print(f"   Full traceback:")
+            print(error_details)
+            print(f"   SMTP_SERVER: {os.environ.get('SMTP_SERVER', 'NOT SET')}")
+            print(f"   SMTP_PORT: {os.environ.get('SMTP_PORT', 'NOT SET')}")
+            print(f"   SMTP_USERNAME: {os.environ.get('SMTP_USERNAME', 'NOT SET')}")
+            print(f"   SMTP_PASSWORD: {'SET' if os.environ.get('SMTP_PASSWORD') else 'NOT SET'}")
+            print(f"   FROM_EMAIL: {os.environ.get('FROM_EMAIL', 'NOT SET')}")
     
     # Start email sending in background thread
     email_thread = threading.Thread(target=send_email_async, daemon=True)
@@ -499,9 +512,10 @@ def send_email_code_route():
     
     # Return immediately - email is being sent in background
     # This prevents the request from timing out on Render
+    # Note: Check Render logs if email doesn't arrive
     return jsonify({
         'success': True, 
-        'message': f'Verification code is being sent to {email}. Please check your inbox.'
+        'message': f'Verification code is being sent to {email}. Please check your inbox and spam folder. If you don\'t receive it, check Render logs for errors.'
     })
 
 
@@ -609,12 +623,13 @@ def serialize_authentication_options(options):
             {
                 'id': base64.b64encode(cred.id).decode(),
                 'type': cred.type.value if hasattr(cred.type, 'value') else str(cred.type),
-                'transports': [t.value for t in cred.transports] if cred.transports else []
+                'transports': [t.value for t in cred.transports] if cred.transports else ['internal']  # Default to internal if not set
             }
             for cred in options.allow_credentials
         ]
     else:
         # Empty allowCredentials means discover all credentials - ensure user verification is required
+        # But we prefer to list credentials with internal transport to force platform authenticators
         result['allowCredentials'] = []
     
     return result
@@ -814,10 +829,24 @@ def webauthn_authenticate_begin():
             return jsonify({'success': False, 'error': 'No biometric credentials registered'}), 404
         
         # Prepare credential descriptors with platform transport hint
-        # This tells the browser to prefer platform authenticators (Face ID/Touch ID)
-        # Note: We don't restrict to specific credential IDs - let browser discover platform authenticators
-        # The browser will match the credential automatically based on RP_ID and origin
-        allow_credentials = []  # Empty list allows browser to discover all platform authenticators for this RP_ID
+        # Include all user's credentials with platform transport to force platform authenticator use
+        # This ensures the browser uses Face ID/Touch ID instead of showing QR code options
+        allow_credentials = []
+        for cred in credentials:
+            try:
+                cred_id_bytes = safe_b64decode(cred.credential_id)
+                allow_credentials.append(
+                    PublicKeyCredentialDescriptor(
+                        id=cred_id_bytes,
+                        transports=[AuthenticatorTransport.INTERNAL]  # Force internal/platform authenticator
+                    )
+                )
+            except Exception as e:
+                print(f"Error processing credential {cred.id}: {e}")
+                continue
+        
+        # If no credentials found, use empty list (shouldn't happen, but handle it)
+        # Empty list with userVerification=required should still prefer platform authenticators
         
         # Generate authentication options
         # Set timeout to force prompt (not auto-confirm)
@@ -825,7 +854,7 @@ def webauthn_authenticate_begin():
         origin = get_webauthn_origin()
         authentication_options = generate_authentication_options(
             rp_id=RP_ID,
-            allow_credentials=allow_credentials,
+            allow_credentials=allow_credentials if allow_credentials else None,  # None means discover all, but we prefer to list them
             user_verification=UserVerificationRequirement.REQUIRED,  # Require biometric confirmation
             timeout=60000,  # 60 second timeout to ensure prompt appears
         )
@@ -1956,8 +1985,8 @@ def user_info():
     })
 
 
-# Initialize database when app starts (works with both direct run and gunicorn)
-# This ensures database tables are created even when using gunicorn on Render
+# Initialize database lazily (only when first request comes in)
+# This speeds up cold starts on Render free tier
 def initialize_database():
     """Initialize database tables and sample data"""
     try:
@@ -1970,8 +1999,17 @@ def initialize_database():
         # Log error but don't crash - database might already exist
         print(f"Database initialization note: {e}")
 
-# Initialize database on import (for gunicorn/production)
-initialize_database()
+# Track if database has been initialized
+_db_initialized = False
+
+# Initialize database on first request (lazy initialization for faster cold starts)
+@app.before_request
+def ensure_database_initialized():
+    """Ensure database is initialized before handling requests"""
+    global _db_initialized
+    if not _db_initialized:
+        initialize_database()
+        _db_initialized = True
 
 # Python conditional: Checks if script is being run directly (not imported as module)
 # __name__ == '__main__' is True when script is executed directly

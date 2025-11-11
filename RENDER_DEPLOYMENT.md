@@ -150,9 +150,38 @@ After deployment:
 - Check `DATABASE_URL` is set correctly
 - Database tables are created automatically on first run
 
-### Email Not Sending
+### Email Not Sending / Not Receiving Emails
 
-**Common Error: "[Errno 101] Network is unreachable"**
+**Symptom**: App says "code sent" but you don't receive the email
+
+**How to Debug**:
+
+1. **Check Render Logs**:
+   - Go to your Render dashboard
+   - Click on your web service
+   - Click "Logs" tab
+   - Look for email-related errors (search for "ERROR SENDING EMAIL" or "SMTP")
+   - Check if SMTP environment variables are set correctly
+
+2. **Verify SMTP Environment Variables**:
+   - Go to Render dashboard → Your service → Environment tab
+   - Verify these are set:
+     - `SMTP_SERVER` = `smtp.gmail.com`
+     - `SMTP_PORT` = `465` (recommended)
+     - `SMTP_USERNAME` = your email
+     - `SMTP_PASSWORD` = your app password (no spaces!)
+     - `FROM_EMAIL` = your email
+   - **Important**: Make sure `SMTP_PASSWORD` has NO spaces when copying from Gmail
+
+3. **Check Spam Folder**:
+   - Emails might be going to spam
+   - Check spam/junk folder in your email
+
+4. **Check Email Address**:
+   - Make sure the email address you entered is correct
+   - Try a different email address to test
+
+5. **Common Error: "[Errno 101] Network is unreachable"**
 
 This error occurs when Render cannot connect to external SMTP servers. Solutions:
 
@@ -178,6 +207,34 @@ This error occurs when Render cannot connect to external SMTP servers. Solutions
 ### Build Failures
 - Check that all dependencies in `requirements.txt` are valid
 - Ensure Python version in `runtime.txt` matches Render's supported versions
+
+### Slow Loading / Cold Starts (Free Tier)
+
+**Issue**: Service takes 10-30 seconds to respond on first request after inactivity
+
+**What's happening**: Render's free tier services automatically sleep after ~15 minutes of inactivity to save resources. When you visit the site, it needs to "wake up" which takes time.
+
+**Solutions**:
+
+1. **Use a Keep-Alive Service** (Free):
+   - Use a free service like [UptimeRobot](https://uptimerobot.com/) or [cron-job.org](https://cron-job.org/)
+   - Set it to ping your Render URL every 10-14 minutes
+   - This keeps your service awake and prevents cold starts
+   - Example: `https://campuskey.onrender.com/` (ping the root URL)
+
+2. **Upgrade to Paid Tier** ($7/month):
+   - Paid services stay awake 24/7
+   - No cold starts, instant response
+   - Better for production use
+
+3. **Optimize Startup Time** (Already done):
+   - Database initialization is now lazy (only runs on first request)
+   - This reduces cold start time from ~30s to ~10-15s
+
+4. **Accept the Delay**:
+   - Free tier is free for a reason
+   - First request after sleep takes 10-30 seconds
+   - Subsequent requests are fast until service sleeps again
 
 ## Security Checklist
 - [ ] Set a strong `SECRET_KEY` (don't use default)

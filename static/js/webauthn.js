@@ -205,17 +205,25 @@ async function startWebAuthnAuthentication(username) {
         const options = data.options;
         
         // Convert options to WebAuthn format
+        // Ensure we explicitly request platform authenticators (Face ID/Touch ID)
         const publicKeyCredentialRequestOptions = {
             challenge: base64ToArrayBuffer(options.challenge),
             allowCredentials: options.allowCredentials ? options.allowCredentials.map(cred => ({
                 id: base64ToArrayBuffer(cred.id),
-                type: cred.type,
-                transports: cred.transports
+                type: cred.type || 'public-key',
+                transports: cred.transports || ['internal']  // Force internal/platform transport
             })) : [],
             timeout: options.timeout || 60000,  // 60 second timeout
             userVerification: 'required',  // Force required - must use biometric
             rpId: options.rpId
         };
+        
+        // Log for debugging
+        console.log('WebAuthn authentication options:', {
+            allowCredentials: publicKeyCredentialRequestOptions.allowCredentials.length,
+            userVerification: publicKeyCredentialRequestOptions.userVerification,
+            rpId: publicKeyCredentialRequestOptions.rpId
+        });
         
         // Get credential using WebAuthn API (triggers Face ID/Touch ID)
         // This will prompt the user for biometric confirmation

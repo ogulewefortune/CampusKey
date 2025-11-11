@@ -48,10 +48,19 @@ If you have a custom domain (e.g., `campuskey.com`):
 **Issue**: "No passkey available" or QR code appears
 - **Solution**: Make sure you're using HTTPS (Render provides this automatically)
 - **Solution**: Check that `RENDER_EXTERNAL_URL` is set (Render sets this automatically)
+- **Solution**: Make sure you registered your biometric ON RENDER, not locally
+- **Solution**: Credentials registered on `localhost` won't work on `campuskey.onrender.com` - they're different domains
 
 **Issue**: Biometric works locally but not on Render
 - **Solution**: Credentials registered locally are tied to `localhost` - you need to register again on Render
 - **Solution**: Each domain (localhost vs Render) needs separate credential registration
+- **Solution**: After deploying to Render, log in and register your biometric again on the Render site
+
+**Issue**: QR Code or Security Key options appear instead of Face ID/Touch ID
+- **Cause**: Browser doesn't detect platform authenticators registered for this domain
+- **Solution**: Make sure you registered your biometric ON RENDER (not locally)
+- **Solution**: Check browser console for WebAuthn errors
+- **Solution**: Try registering again on Render - the credential must be registered on the same domain you're authenticating on
 
 ### Summary
 
