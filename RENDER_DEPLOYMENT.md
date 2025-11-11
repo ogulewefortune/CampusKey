@@ -13,12 +13,49 @@ Set these in your Render dashboard under your web service settings:
 - `SECRET_KEY`: A secure random string (e.g., generate with: `python -c "import secrets; print(secrets.token_hex(32))"`)
 - `DATABASE_URL`: Automatically provided by Render if you add a PostgreSQL database
 
-**Email Configuration (Optional but Recommended):**
-- `SMTP_SERVER`: Your SMTP server (e.g., `smtp.gmail.com`)
-- `SMTP_PORT`: SMTP port (e.g., `587`)
-- `SMTP_USERNAME`: Your email address
-- `SMTP_PASSWORD`: Your email app password (for Gmail, use App Password)
-- `FROM_EMAIL`: Sender email address
+**Email Configuration (REQUIRED for Email OTP to work):**
+To enable email OTP verification codes, you MUST set these environment variables:
+
+1. **`SMTP_SERVER`**: Your SMTP server
+   - For Gmail: `smtp.gmail.com`
+   - For Outlook: `smtp-mail.outlook.com`
+   - For other providers: Check your email provider's SMTP settings
+
+2. **`SMTP_PORT`**: SMTP port number
+   - For Gmail with TLS: `587`
+   - For Gmail with SSL: `465`
+   - For Outlook: `587`
+
+3. **`SMTP_USERNAME`**: Your email address
+   - Example: `your-email@gmail.com`
+
+4. **`SMTP_PASSWORD`**: Your email app password
+   - **IMPORTANT**: For Gmail, you MUST use an App Password, NOT your regular password
+   - To create a Gmail App Password:
+     1. Go to your Google Account settings
+     2. Enable 2-Step Verification (if not already enabled)
+     3. Go to App Passwords
+     4. Generate a new app password for "Mail"
+     5. Copy the 16-character password (no spaces)
+   - For other providers, use your email password or app-specific password
+
+5. **`FROM_EMAIL`**: Sender email address (usually same as SMTP_USERNAME)
+   - Example: `your-email@gmail.com`
+
+**Example for Gmail:**
+```
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=abcdefghijklmnop
+FROM_EMAIL=your-email@gmail.com
+```
+
+**⚠️ Important Notes:**
+- Without these variables set, emails will NOT be sent (codes will only print to console/logs)
+- Never commit your email password to GitHub
+- Use App Passwords for Gmail (not your regular password)
+- Make sure there are NO spaces in the SMTP_PASSWORD when copying from Gmail
 
 **Optional:**
 - `FLASK_DEBUG`: Set to `False` for production (default is False)
