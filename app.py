@@ -826,7 +826,10 @@ def webauthn_authenticate_begin():
         # Get user's credentials
         credentials = WebAuthnCredential.query.filter_by(user_id=user.id).all()
         if not credentials:
-            return jsonify({'success': False, 'error': 'No biometric credentials registered'}), 404
+            return jsonify({
+                'success': False, 
+                'error': 'No biometric credentials registered for your account. Please log in with username/password and register your biometric in the dashboard first.'
+            }), 404
         
         # Prepare credential descriptors with platform transport hint
         # Include all user's credentials with platform transport to force platform authenticator use

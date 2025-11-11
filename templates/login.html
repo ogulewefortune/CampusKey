@@ -207,7 +207,16 @@ async function handleBiometricLogin() {
         }
     } catch (error) {
         console.error('Biometric login exception:', error);
-        alert('Error: ' + error.message);
+        let errorMsg = error.message;
+        
+        // Provide helpful guidance for common errors
+        if (errorMsg.includes('No biometric registered') || errorMsg.includes('No passkey')) {
+            errorMsg = 'No biometric registered for this site.\n\nTo register:\n1. Log in with username/password\n2. Click "Register Biometric" in the dashboard\n3. Register your Face ID/Touch ID\n4. Then try biometric login again';
+        } else if (errorMsg.includes('No biometric credentials')) {
+            errorMsg = 'No biometric credentials found.\n\nPlease register your biometric first by logging in and going to "Register Biometric" in the dashboard.';
+        }
+        
+        alert('Error: ' + errorMsg);
         btn.disabled = false;
         btnText.textContent = originalText;
     }

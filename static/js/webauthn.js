@@ -227,9 +227,23 @@ async function startWebAuthnAuthentication(username) {
         
         // Get credential using WebAuthn API (triggers Face ID/Touch ID)
         // This will prompt the user for biometric confirmation
-        const credential = await navigator.credentials.get({
-            publicKey: publicKeyCredentialRequestOptions
-        });
+        let credential;
+        try {
+            credential = await navigator.credentials.get({
+                publicKey: publicKeyCredentialRequestOptions
+            });
+        } catch (error) {
+            // Handle specific WebAuthn errors
+            if (error.name === 'NotAllowedError' || error.message.includes('No passkey') || error.message.includes('not registered')) {
+                throw new Error('No biometric registered for this site. Please register your biometric first by logging in and going to "Register Biometric" in the dashboard.');
+            } else if (error.name === 'InvalidStateError') {
+                throw new Error('Biometric credential already exists. Please try again.');
+            } else if (error.name === 'NotSupportedError') {
+                throw new Error('Biometric authentication is not supported on this device or browser.');
+            } else {
+                throw error; // Re-throw other errors
+            }
+        }
         
         // Convert credential to format expected by server
         const credentialForServer = {
@@ -273,7 +287,18 @@ async function startWebAuthnAuthentication(username) {
         }
     } catch (error) {
         console.error('WebAuthn authentication error:', error);
-        return { success: false, error: error.message };
+        let errorMessage = error.message;
+        
+        // Provide helpful error messages
+        if (errorMessage.includes('No biometric registered') || errorMessage.includes('No passkey')) {
+            errorMessage = 'No biometric registered for this site.\n\nPlease:\n1. Log in with username/password\n2. Go to "Register Biometric" in the dashboard\n3. Register your Face ID/Touch ID\n4. Then try biometric login again';
+        } else if (errorMessage.includes('User not found')) {
+            errorMessage = 'User not found. Please check your username.';
+        } else if (errorMessage.includes('No biometric credentials registered')) {
+            errorMessage = 'No biometric credentials found for your account.\n\nPlease register your biometric first:\n1. Log in with username/password\n2. Go to "Register Biometric" in the dashboard\n3. Register your Face ID/Touch ID';
+        }
+        
+        return { success: false, error: errorMessage };
     }
 }
 
