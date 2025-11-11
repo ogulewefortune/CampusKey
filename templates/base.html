@@ -242,6 +242,16 @@
                     {# Link text: "Device Security" label #}
                     <span>Device Security</span>
                 </a>
+                {# Register biometric link: Link to register Face ID, Touch ID, or Windows Hello #}
+                <a href="{{ url_for('register_biometric') }}" class="nav-item {% if request.endpoint == 'register_biometric' %}active{% endif %}">
+                    {# SVG key icon: Key icon representing biometric authentication/security #}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {# SVG path: Draws key shape #}
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                    </svg>
+                    {# Link text: "Register Biometric" label #}
+                    <span>Register Biometric</span>
+                </a>
                 {# Account protection link: Link to view account protection status #}
                 <a href="{{ url_for('account_protection') }}" class="nav-item {% if request.endpoint == 'account_protection' %}active{% endif %}">
                     {# SVG shield icon: Shield with checkmark representing account protection #}
