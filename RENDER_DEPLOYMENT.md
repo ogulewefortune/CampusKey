@@ -100,6 +100,13 @@ FROM_EMAIL=your-email@gmail.com
 - Use App Passwords for Gmail (not your regular password)
 - Make sure there are NO spaces in the SMTP_PASSWORD when copying from Gmail
 
+**WebAuthn/Biometric Authentication Configuration:**
+- **Automatically configured**: The app automatically uses `RENDER_EXTERNAL_URL` (provided by Render) for WebAuthn
+- **Optional customization**: If you need a custom domain for WebAuthn:
+  - `WEBAUTHN_RP_ID`: Custom Relying Party ID (domain name, e.g., `yourdomain.com`)
+  - `WEBAUTHN_ORIGIN`: Custom origin URL (e.g., `https://yourdomain.com`)
+- **Note**: For most deployments, you don't need to set these - Render's `RENDER_EXTERNAL_URL` is automatically used
+
 **Optional:**
 - `FLASK_DEBUG`: Set to `False` for production (default is False)
 - `PORT`: Automatically set by Render (don't override)

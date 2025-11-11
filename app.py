@@ -35,7 +35,7 @@ import json
 import hashlib
 import secrets
 from webauthn import generate_registration_options, verify_registration_response, generate_authentication_options, verify_authentication_response
-from webauthn.helpers.structs import PublicKeyCredentialDescriptor, AuthenticatorSelection, UserVerificationRequirement, AuthenticatorAttachment
+from webauthn.helpers.structs import PublicKeyCredentialDescriptor, AuthenticatorSelectionCriteria, UserVerificationRequirement, AuthenticatorAttachment, RegistrationCredential, AuthenticatorAttestationResponse, AuthenticationCredential, AuthenticatorAssertionResponse, PublicKeyCredentialType, ResidentKeyRequirement, AuthenticatorTransport
 from webauthn.helpers.cose import COSEAlgorithmIdentifier
 
 
@@ -522,6 +522,108 @@ def create_device_fingerprint(device_info, user_agent, ip_address):
     }, sort_keys=True)
     return hashlib.sha256(fingerprint_string.encode()).hexdigest()
 
+# Helper function to safely decode base64 with padding handling
+def safe_b64decode(data):
+    """Safely decode base64 string, handling padding issues"""
+    if not data:
+        return b''
+    # If already bytes, return as-is (shouldn't happen, but handle it)
+    if isinstance(data, bytes):
+        return data
+    # Ensure it's a string
+    if not isinstance(data, str):
+        data = str(data)
+    # Add padding if needed
+    missing_padding = len(data) % 4
+    if missing_padding:
+        data += '=' * (4 - missing_padding)
+    try:
+        return base64.b64decode(data)
+    except Exception as e:
+        # Try URL-safe base64 if standard fails
+        try:
+            return base64.urlsafe_b64decode(data)
+        except:
+            raise ValueError(f"Failed to decode base64: {e}")
+
+# Helper function to serialize WebAuthn registration options
+def serialize_registration_options(options):
+    """Convert PublicKeyCredentialCreationOptions to dictionary"""
+    result = {
+        'challenge': base64.b64encode(options.challenge).decode(),
+        'rp': {
+            'id': options.rp.id,
+            'name': options.rp.name
+        },
+        'user': {
+            'id': base64.b64encode(options.user.id).decode(),
+            'name': options.user.name,
+            'displayName': options.user.display_name or options.user.name
+        },
+        'pubKeyCredParams': [
+            {
+                'type': param.type,
+                'alg': param.alg.value if hasattr(param.alg, 'value') else int(param.alg)
+            }
+            for param in options.pub_key_cred_params
+        ],
+        'timeout': options.timeout,
+    }
+    
+    if options.authenticator_selection:
+        authenticator_selection_dict = {
+            'userVerification': options.authenticator_selection.user_verification.value if options.authenticator_selection.user_verification else None
+        }
+        # Add authenticatorAttachment if specified
+        if options.authenticator_selection.authenticator_attachment:
+            authenticator_selection_dict['authenticatorAttachment'] = options.authenticator_selection.authenticator_attachment.value
+        # Add residentKey if specified
+        if hasattr(options.authenticator_selection, 'resident_key') and options.authenticator_selection.resident_key:
+            authenticator_selection_dict['residentKey'] = options.authenticator_selection.resident_key.value
+        elif hasattr(options.authenticator_selection, 'require_resident_key'):
+            authenticator_selection_dict['requireResidentKey'] = options.authenticator_selection.require_resident_key
+        result['authenticatorSelection'] = authenticator_selection_dict
+    
+    if options.exclude_credentials:
+        result['excludeCredentials'] = [
+            {
+                'id': base64.b64encode(cred.id).decode(),
+                'type': cred.type.value if hasattr(cred.type, 'value') else str(cred.type),
+                'transports': [t.value for t in cred.transports] if cred.transports else []
+            }
+            for cred in options.exclude_credentials
+        ]
+    
+    if options.attestation:
+        result['attestation'] = options.attestation.value
+    
+    return result
+
+# Helper function to serialize WebAuthn authentication options
+def serialize_authentication_options(options):
+    """Convert PublicKeyCredentialRequestOptions to dictionary"""
+    result = {
+        'challenge': base64.b64encode(options.challenge).decode(),
+        'timeout': options.timeout,
+        'rpId': options.rp_id,
+        'userVerification': options.user_verification.value if options.user_verification else None
+    }
+    
+    if options.allow_credentials:
+        result['allowCredentials'] = [
+            {
+                'id': base64.b64encode(cred.id).decode(),
+                'type': cred.type.value if hasattr(cred.type, 'value') else str(cred.type),
+                'transports': [t.value for t in cred.transports] if cred.transports else []
+            }
+            for cred in options.allow_credentials
+        ]
+    else:
+        # Empty allowCredentials means discover all credentials - ensure user verification is required
+        result['allowCredentials'] = []
+    
+    return result
+
 # Helper function to store or update device fingerprint
 def store_device_fingerprint(user_id, fingerprint_hash, device_info, user_agent, ip_address):
     """Store or update device fingerprint"""
@@ -569,22 +671,23 @@ def webauthn_register_begin():
         
         # Get existing credentials for this user
         existing_credentials = WebAuthnCredential.query.filter_by(user_id=user.id).all()
-        existing_credential_ids = [base64.b64decode(cred.credential_id) for cred in existing_credentials]
+        existing_credential_ids = [safe_b64decode(cred.credential_id) for cred in existing_credentials]
         
         # Generate registration options
         origin = get_webauthn_origin()
         registration_options = generate_registration_options(
             rp_id=RP_ID,
             rp_name=RP_NAME,
-            user_id=user.username.encode(),
+            user_id=user.username,  # Library expects string, not bytes
             user_name=user.username,
             user_display_name=user.username,
             exclude_credentials=[
                 PublicKeyCredentialDescriptor(id=cred_id) for cred_id in existing_credential_ids
             ],
-            authenticator_selection=AuthenticatorSelection(
-                authenticator_attachment=AuthenticatorAttachment.PLATFORM,  # Prefer platform authenticators (Face ID, Touch ID)
-                user_verification=UserVerificationRequirement.REQUIRED
+            authenticator_selection=AuthenticatorSelectionCriteria(
+                authenticator_attachment=AuthenticatorAttachment.PLATFORM,  # Require platform authenticators (Face ID, Touch ID)
+                user_verification=UserVerificationRequirement.REQUIRED,
+                resident_key=ResidentKeyRequirement.PREFERRED  # Prefer resident keys for better UX
             ),
         )
         
@@ -594,7 +697,7 @@ def webauthn_register_begin():
         
         return jsonify({
             'success': True,
-            'options': registration_options.model_dump()
+            'options': serialize_registration_options(registration_options)
         })
     except Exception as e:
         print(f"WebAuthn registration begin error: {e}")
@@ -627,20 +730,48 @@ def webauthn_register_complete():
         if not user:
             return jsonify({'success': False, 'error': 'User not found'}), 404
         
+        # Convert dictionary credential to RegistrationCredential object
+        # JavaScript sends: {id, rawId (base64), response: {clientDataJSON (base64), attestationObject (base64)}, type}
+        credential_obj = RegistrationCredential(
+            id=credential.get('id'),
+            raw_id=safe_b64decode(credential.get('rawId')),
+            response=AuthenticatorAttestationResponse(
+                client_data_json=safe_b64decode(credential['response']['clientDataJSON']),
+                attestation_object=safe_b64decode(credential['response']['attestationObject'])
+            ),
+            type=PublicKeyCredentialType.PUBLIC_KEY
+        )
+        
         # Verify registration response
         origin = get_webauthn_origin()
         verification = verify_registration_response(
-            credential=credential,
-            expected_challenge=base64.b64decode(challenge),
+            credential=credential_obj,
+            expected_challenge=safe_b64decode(challenge),
             expected_origin=origin,
             expected_rp_id=RP_ID,
         )
         
+        # Convert credential_public_key to JSON-serializable format
+        # The public key may contain bytes that need to be converted to base64 strings
+        def convert_bytes_to_base64(obj):
+            """Recursively convert bytes to base64 strings for JSON serialization"""
+            if isinstance(obj, bytes):
+                return base64.b64encode(obj).decode()
+            elif isinstance(obj, dict):
+                return {k: convert_bytes_to_base64(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_bytes_to_base64(item) for item in obj]
+            else:
+                return obj
+        
+        public_key_serializable = convert_bytes_to_base64(verification.credential_public_key)
+        
         # Store credential in database
+        # Store the base64-encoded credential_id (required for WebAuthn verification)
         credential_record = WebAuthnCredential(
             user_id=user.id,
-            credential_id=base64.b64encode(verification.credential_id).decode(),
-            public_key=json.dumps(verification.credential_public_key),
+            credential_id=base64.b64encode(verification.credential_id).decode(),  # Store as base64 string
+            public_key=json.dumps(public_key_serializable),
             counter=verification.sign_count,
             device_name=device_name
         )
@@ -687,18 +818,21 @@ def webauthn_authenticate_begin():
         if not credentials:
             return jsonify({'success': False, 'error': 'No biometric credentials registered'}), 404
         
-        # Prepare credential descriptors
-        allow_credentials = [
-            PublicKeyCredentialDescriptor(id=base64.b64decode(cred.credential_id))
-            for cred in credentials
-        ]
+        # Prepare credential descriptors with platform transport hint
+        # This tells the browser to prefer platform authenticators (Face ID/Touch ID)
+        # Note: We don't restrict to specific credential IDs - let browser discover platform authenticators
+        # The browser will match the credential automatically based on RP_ID and origin
+        allow_credentials = []  # Empty list allows browser to discover all platform authenticators for this RP_ID
         
         # Generate authentication options
+        # Set timeout to force prompt (not auto-confirm)
+        # Require explicit user verification (biometric confirmation)
         origin = get_webauthn_origin()
         authentication_options = generate_authentication_options(
             rp_id=RP_ID,
             allow_credentials=allow_credentials,
-            user_verification=UserVerificationRequirement.REQUIRED,
+            user_verification=UserVerificationRequirement.REQUIRED,  # Require biometric confirmation
+            timeout=60000,  # 60 second timeout to ensure prompt appears
         )
         
         # Store challenge and user info in session
@@ -707,7 +841,7 @@ def webauthn_authenticate_begin():
         
         return jsonify({
             'success': True,
-            'options': authentication_options.model_dump()
+            'options': serialize_authentication_options(authentication_options)
         })
     except Exception as e:
         print(f"WebAuthn authenticate begin error: {e}")
@@ -739,24 +873,134 @@ def webauthn_authenticate_complete():
         if not user:
             return jsonify({'success': False, 'error': 'User not found'}), 404
         
-        # Find the credential
+        # Find the credential using the browser's credential ID
+        # The browser sends the credential ID that was registered
         credential_id_b64 = credential.get('id')
-        credential_record = WebAuthnCredential.query.filter_by(
-            user_id=user.id,
-            credential_id=credential_id_b64
-        ).first()
+        raw_id_data = credential.get('rawId')
+        if not raw_id_data:
+            return jsonify({'success': False, 'error': 'Missing rawId in credential data'}), 400
+        # Ensure raw_id_data is a string before decoding
+        credential_raw_id = safe_b64decode(str(raw_id_data))
+        
+        # Try to find credential by matching the raw credential ID bytes
+        # Handle both base64-stored and integer-stored credential IDs
+        credential_record = None
+        for cred in WebAuthnCredential.query.filter_by(user_id=user.id).all():
+            try:
+                # Try base64 decode first (new format)
+                stored_id_bytes = safe_b64decode(cred.credential_id)
+                if stored_id_bytes == credential_raw_id:
+                    credential_record = cred
+                    break
+            except:
+                # If that fails, try integer format (old format)
+                try:
+                    stored_int = int(cred.credential_id)
+                    # Convert integer to bytes - the integer was created from first 8 bytes
+                    # So we need to check if the first 8 bytes of credential_raw_id match
+                    stored_bytes_8 = stored_int.to_bytes(8, byteorder='big', signed=False)
+                    if len(credential_raw_id) >= 8:
+                        if stored_bytes_8 == credential_raw_id[:8]:
+                            credential_record = cred
+                            break
+                    # Also try matching the full length if it fits
+                    if len(credential_raw_id) <= 8:
+                        if stored_bytes_8[:len(credential_raw_id)] == credential_raw_id:
+                            credential_record = cred
+                            break
+                except Exception as e:
+                    print(f"Error matching integer credential: {e}")
+                    pass
         
         if not credential_record:
+            # Log for debugging
+            print(f"Credential lookup failed for user {user.id}")
+            print(f"Browser credential rawId length: {len(credential_raw_id)}")
+            print(f"Browser credential rawId (first 20 bytes): {credential_raw_id[:20]}")
+            stored_creds = WebAuthnCredential.query.filter_by(user_id=user.id).all()
+            for sc in stored_creds:
+                print(f"Stored credential_id: {sc.credential_id} (type: {type(sc.credential_id).__name__})")
             log_login_attempt(user.username, 'biometric', 'failed', user.id)
-            return jsonify({'success': False, 'error': 'Invalid credential'}), 401
+            return jsonify({'success': False, 'error': 'Invalid credential - credential not found for this user'}), 401
+        
+        # Convert dictionary credential to AuthenticationCredential object
+        # JavaScript sends: {id, rawId (base64), response: {clientDataJSON, authenticatorData, signature, userHandle (all base64)}, type}
+        # Use already-decoded credential_raw_id instead of decoding again
+        response_data = credential.get('response', {})
+        if not response_data:
+            return jsonify({'success': False, 'error': 'Missing response data in credential'}), 400
+        
+        # Ensure all response data is properly decoded from base64 to bytes
+        client_data_json = response_data.get('clientDataJSON', '')
+        authenticator_data = response_data.get('authenticatorData', '')
+        signature = response_data.get('signature', '')
+        user_handle = response_data.get('userHandle')
+        
+        # Convert strings to bytes using base64 decode
+        client_data_bytes = safe_b64decode(str(client_data_json)) if client_data_json else b''
+        authenticator_data_bytes = safe_b64decode(str(authenticator_data)) if authenticator_data else b''
+        signature_bytes = safe_b64decode(str(signature)) if signature else b''
+        user_handle_bytes = safe_b64decode(str(user_handle)) if user_handle else None
+        
+        credential_obj = AuthenticationCredential(
+            id=credential.get('id'),
+            raw_id=credential_raw_id,  # Already decoded above as bytes
+            response=AuthenticatorAssertionResponse(
+                client_data_json=client_data_bytes,
+                authenticator_data=authenticator_data_bytes,
+                signature=signature_bytes,
+                user_handle=user_handle_bytes
+            ),
+            type=PublicKeyCredentialType.PUBLIC_KEY
+        )
         
         # Verify authentication response
         origin = get_webauthn_origin()
-        public_key = json.loads(credential_record.public_key)
+        public_key_dict = json.loads(credential_record.public_key)
+        
+        # Convert base64 strings back to bytes in the public key
+        # The public key was stored with bytes converted to base64 strings
+        # COSE key format: values can be int, str (base64), or bytes
+        def convert_base64_to_bytes(obj):
+            """Recursively convert base64 strings back to bytes"""
+            if isinstance(obj, bytes):
+                # Already bytes, return as-is
+                return obj
+            elif isinstance(obj, str):
+                # Try to decode as base64 - if it fails, return as-is (might be a regular string)
+                try:
+                    decoded = safe_b64decode(obj)
+                    # Only return decoded if it looks like binary data (not a regular string)
+                    # Base64-encoded bytes typically decode to non-printable characters
+                    if len(decoded) > 0:
+                        return decoded
+                    return obj
+                except (ValueError, TypeError):
+                    # Not base64, return as string
+                    return obj
+            elif isinstance(obj, dict):
+                return {k: convert_base64_to_bytes(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_base64_to_bytes(item) for item in obj]
+            else:
+                # int, float, None, etc. - return as-is
+                return obj
+        
+        public_key = convert_base64_to_bytes(public_key_dict)
+        
+        # Ensure challenge is bytes - it's stored as base64 string in session
+        if isinstance(challenge, bytes):
+            expected_challenge_bytes = challenge
+        elif isinstance(challenge, str):
+            # Challenge is stored as base64 string, decode to bytes
+            expected_challenge_bytes = safe_b64decode(challenge)
+        else:
+            # Convert to string first, then decode
+            expected_challenge_bytes = safe_b64decode(str(challenge))
         
         verification = verify_authentication_response(
-            credential=credential,
-            expected_challenge=base64.b64decode(challenge),
+            credential=credential_obj,
+            expected_challenge=expected_challenge_bytes,
             expected_origin=origin,
             expected_rp_id=RP_ID,
             credential_public_key=public_key,
@@ -775,15 +1019,18 @@ def webauthn_authenticate_complete():
         store_device_fingerprint(user.id, fingerprint_hash, device_info, user_agent, ip_address)
         
         # Log in the user
-        login_user(user)
+        login_user(user, remember=True)  # Use remember=True to persist session
         log_login_attempt(user.username, 'biometric', 'success', user.id)
         session['auth_method'] = 'biometric'
         session['login_time'] = get_est_time().isoformat()
         session['user_role'] = user.role
         
-        # Clear session
+        # Clear WebAuthn challenge session (but keep user logged in)
         session.pop('webauthn_challenge', None)
         session.pop('webauthn_user_id', None)
+        
+        # Commit session changes
+        session.permanent = True
         
         # Determine redirect URL
         if user.role == 'admin':
@@ -792,6 +1039,8 @@ def webauthn_authenticate_complete():
             redirect_url = url_for('professor_dashboard')
         else:
             redirect_url = url_for('student_dashboard')
+        
+        print(f"Biometric login successful for user {user.username}, redirecting to {redirect_url}")
         
         return jsonify({
             'success': True,

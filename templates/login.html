@@ -189,22 +189,24 @@ async function handleBiometricLogin() {
     try {
         const result = await startWebAuthnAuthentication(username);
         
+        console.log('Biometric login result:', result);
+        
         if (result.success) {
             // Store device fingerprint after successful login
             await storeDeviceFingerprint();
             
-            alert('Biometric authentication successful!\n\nRedirecting to dashboard...');
-            if (result.redirect) {
-                window.location.href = result.redirect;
-            } else {
-                window.location.href = '/dashboard';
-            }
+            // Redirect immediately without alert to avoid blocking
+            const redirectUrl = result.redirect || '/dashboard';
+            console.log('Redirecting to:', redirectUrl);
+            window.location.href = redirectUrl;
         } else {
+            console.error('Biometric login failed:', result.error);
             alert('Error: ' + result.error);
             btn.disabled = false;
             btnText.textContent = originalText;
         }
     } catch (error) {
+        console.error('Biometric login exception:', error);
         alert('Error: ' + error.message);
         btn.disabled = false;
         btnText.textContent = originalText;

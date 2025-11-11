@@ -91,7 +91,7 @@ async function startWebAuthnRegistration(deviceName = null) {
         // Check if platform authenticator is available
         const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         if (!available) {
-            throw new Error('Biometric authentication (Face ID/Touch ID) is not available on this device.');
+            throw new Error('Biometric authentication (Face ID/Touch ID) is not available on this device. Make sure you are using HTTPS or a browser that supports platform authenticators on localhost.');
         }
         
         // Get registration options from server
@@ -110,6 +110,12 @@ async function startWebAuthnRegistration(deviceName = null) {
         }
         
         const options = data.options;
+        
+        // Verify authenticatorSelection is requesting platform authenticators
+        if (!options.authenticatorSelection || options.authenticatorSelection.authenticatorAttachment !== 'platform') {
+            console.warn('Warning: Platform authenticator not explicitly requested. Browser may show QR code options.');
+            console.log('Received authenticatorSelection:', options.authenticatorSelection);
+        }
         
         // Convert options to WebAuthn format
         const publicKeyCredentialCreationOptions = {
@@ -206,12 +212,13 @@ async function startWebAuthnAuthentication(username) {
                 type: cred.type,
                 transports: cred.transports
             })) : [],
-            timeout: options.timeout,
-            userVerification: options.userVerification || 'required',
+            timeout: options.timeout || 60000,  // 60 second timeout
+            userVerification: 'required',  // Force required - must use biometric
             rpId: options.rpId
         };
         
         // Get credential using WebAuthn API (triggers Face ID/Touch ID)
+        // This will prompt the user for biometric confirmation
         const credential = await navigator.credentials.get({
             publicKey: publicKeyCredentialRequestOptions
         });
@@ -247,9 +254,13 @@ async function startWebAuthnAuthentication(username) {
         
         const completeData = await completeResponse.json();
         
+        console.log('Authentication complete response:', completeData);
+        
         if (completeData.success) {
+            console.log('Authentication successful, redirecting to:', completeData.redirect);
             return { success: true, redirect: completeData.redirect };
         } else {
+            console.error('Authentication failed:', completeData.error);
             throw new Error(completeData.error || 'Authentication failed');
         }
     } catch (error) {
