@@ -231,24 +231,31 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                     # Python method call: Authenticates with SMTP server using credentials
                     # login() sends username and password to server
                     server.login(smtp_username, smtp_password)
-            except (OSError, ConnectionError, TimeoutError) as e:
+            except (OSError, ConnectionError, TimeoutError, smtplib.SMTPException) as e:
                 # Python comment: Catches network connection errors
                 # If TLS port 587 fails, try SSL port 465 as fallback
                 connection_error = e
+                error_msg = str(e)
+                print(f" Connection error on port {smtp_port}: {error_msg}")
+                
                 if smtp_port == 587:
                     # Python print statement: Logs fallback attempt
                     print(f" TLS connection failed, trying SSL on port 465...")
                     try:
                         # Python object creation: Retry with SSL connection
                         server = smtplib.SMTP_SSL(smtp_server, 465, timeout=10)
+                        print(f" SSL connection established, authenticating...")
                         server.login(smtp_username, smtp_password)
                         # Python print statement: Logs successful fallback
                         print(f" SSL connection successful on port 465")
                     except Exception as ssl_error:
                         # Python raise statement: Re-raises with both errors
+                        ssl_error_msg = str(ssl_error)
+                        print(f" SSL fallback also failed: {ssl_error_msg}")
                         raise Exception(f"Both TLS (port 587) and SSL (port 465) connections failed. TLS error: {e}, SSL error: {ssl_error}")
                 else:
                     # Python raise statement: Re-raises original error if not port 587
+                    print(f" Connection failed on port {smtp_port}: {error_msg}")
                     raise
             # Python method call: Converts email message to string format
             # as_string() serializes the MIME message for sending
@@ -278,6 +285,17 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                 # Python return statement: Returns True to indicate success
                 return True
         # Python except clause: Catches SMTP-specific exceptions
+        except smtplib.SMTPAuthenticationError as e:
+            # Python variable: Creates error message with exception details
+            error_msg = f"SMTP Authentication failed: {e}. Check your SMTP_USERNAME and SMTP_PASSWORD. For Gmail, make sure you're using an App Password, not your regular password."
+            # Python print statement: Outputs error message
+            print(f" {error_msg}")
+            # Python import statement: Imports traceback module for error details
+            import traceback
+            # Python print statement: Outputs full error traceback
+            print(f"   Traceback: {traceback.format_exc()}")
+            # Python raise statement: Re-raises exception with custom message
+            raise Exception(error_msg)
         except smtplib.SMTPException as e:
             # Python variable: Creates error message with exception details
             error_msg = f"SMTP error: {e}"

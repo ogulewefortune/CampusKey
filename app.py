@@ -534,15 +534,11 @@ def send_email_code_route():
     email_thread = threading.Thread(target=send_email_async, daemon=True)
     email_thread.start()
     
-    # Wait a moment to see if email starts sending (check for immediate errors)
-    import time
-    time.sleep(0.5)  # Wait 500ms to catch immediate configuration errors
-    
     # Return success - email is being sent in background
     # Note: Check Render logs if email doesn't arrive
     return jsonify({
         'success': True, 
-        'message': f'Verification code is being sent to {email}. Please check your inbox and spam folder.'
+        'message': f'Verification code is being sent to {email}. Please check your inbox and spam folder. If not received, check Render logs for errors.'
     })
 
 
@@ -2040,6 +2036,60 @@ def ensure_database_initialized():
     if not _db_initialized:
         initialize_database()
         _db_initialized = True
+
+# Test endpoint to verify SMTP configuration (for debugging)
+@app.route('/api/test-email', methods=['POST'])
+def test_email():
+    """Test email sending configuration"""
+    try:
+        data = request.get_json()
+        test_email_address = data.get('email', 'test@example.com')
+        
+        # Check configuration
+        smtp_server = os.environ.get('SMTP_SERVER', 'NOT SET')
+        smtp_port = os.environ.get('SMTP_PORT', 'NOT SET')
+        smtp_username = os.environ.get('SMTP_USERNAME', 'NOT SET')
+        smtp_password = 'SET' if os.environ.get('SMTP_PASSWORD') else 'NOT SET'
+        from_email = os.environ.get('FROM_EMAIL', 'NOT SET')
+        
+        config_status = {
+            'SMTP_SERVER': smtp_server,
+            'SMTP_PORT': smtp_port,
+            'SMTP_USERNAME': smtp_username,
+            'SMTP_PASSWORD': smtp_password,
+            'FROM_EMAIL': from_email
+        }
+        
+        # Try to send a test email
+        if smtp_username != 'NOT SET' and smtp_password != 'NOT SET':
+            try:
+                result = send_email_code(test_email_address, '123456', 'test_user')
+                return jsonify({
+                    'success': True,
+                    'message': 'Test email sent successfully!',
+                    'config': config_status,
+                    'test_email': test_email_address
+                })
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'error': f'Failed to send test email: {str(e)}',
+                    'config': config_status,
+                    'test_email': test_email_address
+                }), 500
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'SMTP not configured - missing SMTP_USERNAME or SMTP_PASSWORD',
+                'config': config_status
+            }), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 
 # Python conditional: Checks if script is being run directly (not imported as module)
 # __name__ == '__main__' is True when script is executed directly
