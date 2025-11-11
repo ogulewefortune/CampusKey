@@ -92,7 +92,10 @@ SMTP_PASSWORD=abcdefghijklmnop
 FROM_EMAIL=your-email@gmail.com
 ```
 
-**Note:** Port 465 (SSL) is recommended for Render deployments as it's more reliable than port 587 (TLS) on cloud platforms. The code will automatically try port 465 as a fallback if port 587 fails.
+**Note:** 
+- Port 465 (SSL) is recommended for Render deployments as it's more reliable than port 587 (TLS) on cloud platforms. The code will automatically try port 465 as a fallback if port 587 fails.
+- **Email sending is asynchronous**: Emails are sent in the background to prevent request timeouts. The API returns immediately while the email is being sent.
+- **Timeout reduced**: Connection timeout is set to 10 seconds (reduced from 30) to fail faster if SMTP is unreachable.
 
 **⚠️ Important Notes:**
 - Without these variables set, emails will NOT be sent (codes will only print to console/logs)
@@ -101,11 +104,17 @@ FROM_EMAIL=your-email@gmail.com
 - Make sure there are NO spaces in the SMTP_PASSWORD when copying from Gmail
 
 **WebAuthn/Biometric Authentication Configuration:**
-- **Automatically configured**: The app automatically uses `RENDER_EXTERNAL_URL` (provided by Render) for WebAuthn
+- ✅ **Automatically configured**: The app automatically uses `RENDER_EXTERNAL_URL` (provided by Render) for WebAuthn
+- ✅ **Biometrics WILL work on Render** - no additional configuration needed!
+- **How it works**: 
+  - Render automatically sets `RENDER_EXTERNAL_URL` (e.g., `https://campuskey.onrender.com`)
+  - Your app extracts the domain for WebAuthn RP_ID automatically
+  - Just register your biometric on the Render site (credentials from localhost won't work on Render)
 - **Optional customization**: If you need a custom domain for WebAuthn:
   - `WEBAUTHN_RP_ID`: Custom Relying Party ID (domain name, e.g., `yourdomain.com`)
   - `WEBAUTHN_ORIGIN`: Custom origin URL (e.g., `https://yourdomain.com`)
 - **Note**: For most deployments, you don't need to set these - Render's `RENDER_EXTERNAL_URL` is automatically used
+- See `RENDER_WEBAUTHN_CHECK.md` for detailed WebAuthn configuration information
 
 **Optional:**
 - `FLASK_DEBUG`: Set to `False` for production (default is False)

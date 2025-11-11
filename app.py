@@ -482,32 +482,27 @@ def send_email_code_route():
     
     # Python comment: Marks email sending section
     # Send email to the email address entered in the form
-    # Python try block: Attempts to send email, catches exceptions
-    try:
-        # Python function call: Sends verification code via email
-        # send_email_code() sends email or prints to console if SMTP not configured
-        result = send_email_code(email, code, username)  # Send to the email from form input
-        # Python conditional: Checks if email was sent successfully
-        if result:
-            # Python return statement: Returns JSON success response
-            # f-string formats message with email address
-            return jsonify({'success': True, 'message': f'Code sent successfully to {email}'})
-        # Python else clause: Executes if email service returned False
-        else:
-            # Python return statement: Returns JSON error response with 500 status code
-            # 500 = Internal Server Error (email service failed)
-            return jsonify({'success': False, 'error': 'Email service returned False'}), 500
-    # Python except clause: Catches any exceptions during email sending
-    except Exception as e:
-        # Python import statement: Imports traceback module for error details
-        import traceback
-        # Python variable: Gets formatted error traceback as string
-        error_details = traceback.format_exc()
-        # Python print statement: Outputs error details to console for debugging
-        print(f"❌ Error sending email: {error_details}")
-        # Python return statement: Returns JSON error response with error message
-        # str(e) converts exception to string for JSON response
-        return jsonify({'success': False, 'error': f'Failed to send email: {str(e)}'}), 500
+    # Send email asynchronously to avoid blocking the request
+    import threading
+    def send_email_async():
+        """Send email in background thread"""
+        try:
+            send_email_code(email, code, username)
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"❌ Error sending email in background: {error_details}")
+    
+    # Start email sending in background thread
+    email_thread = threading.Thread(target=send_email_async, daemon=True)
+    email_thread.start()
+    
+    # Return immediately - email is being sent in background
+    # This prevents the request from timing out on Render
+    return jsonify({
+        'success': True, 
+        'message': f'Verification code is being sent to {email}. Please check your inbox.'
+    })
 
 
 # WebAuthn and Device Fingerprinting API Routes

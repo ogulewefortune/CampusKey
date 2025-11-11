@@ -215,16 +215,16 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                 if smtp_port == 465:
                     # Python object creation: Creates SSL SMTP connection for port 465
                     # smtplib.SMTP_SSL() creates encrypted connection directly
-                    # timeout=30 sets 30-second timeout for connection (longer for cloud environments)
-                    server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=30)
+                    # timeout=10 sets 10-second timeout for connection (faster failure on cloud)
+                    server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=10)
                     # Python method call: Authenticates with SMTP server using credentials
                     # login() sends username and password to server
                     server.login(smtp_username, smtp_password)
                 else:
                     # Python object creation: Creates SMTP connection for TLS (port 587)
                     # smtplib.SMTP() connects to SMTP server on specified port
-                    # timeout=30 sets 30-second timeout for connection (longer for cloud environments)
-                    server = smtplib.SMTP(smtp_server, smtp_port, timeout=30)
+                    # timeout=10 sets 10-second timeout for connection (faster failure on cloud)
+                    server = smtplib.SMTP(smtp_server, smtp_port, timeout=10)
                     # Python method call: Starts TLS encryption for secure connection
                     # starttls() upgrades connection to encrypted TLS
                     server.starttls()
@@ -240,7 +240,7 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
                     print(f" TLS connection failed, trying SSL on port 465...")
                     try:
                         # Python object creation: Retry with SSL connection
-                        server = smtplib.SMTP_SSL(smtp_server, 465, timeout=30)
+                        server = smtplib.SMTP_SSL(smtp_server, 465, timeout=10)
                         server.login(smtp_username, smtp_password)
                         # Python print statement: Logs successful fallback
                         print(f" SSL connection successful on port 465")
