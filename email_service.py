@@ -82,100 +82,58 @@ def send_email_code(email_address, code, username):
     # Python f-string: Multi-line string with variable interpolation
     # f""" allows embedding {variables} in the HTML template
     html_body = f"""
-    # HTML5 document type declaration
     <!DOCTYPE html>
-    # HTML root element: Contains all HTML content
     <html>
-    # HTML head section: Contains metadata
     <head>
-        # Meta tag: Sets character encoding to UTF-8
         <meta charset="UTF-8">
-        # Meta tag: Sets viewport for responsive design on mobile devices
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    # HTML body element: Contains visible email content
-    # Inline CSS: Sets dark theme styling matching Google's design
     <body style="margin: 0; padding: 0; font-family: 'Google Sans', Roboto, Arial, sans-serif; background-color: #202124; color: #e8eaed;">
-        # HTML table: Outer container for email layout (100% width)
-        # Table-based layout ensures compatibility across email clients
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #202124; padding: 20px;">
-            # HTML table row
             <tr>
-                # HTML table cell: Centers inner content
                 <td align="center">
-                    # HTML table: Inner container (600px max width for email clients)
                     <table width="600" cellpadding="0" cellspacing="0" style="background-color: #202124; max-width: 600px;">
-                        # HTML comment: Marks blue banner header section
                         <!-- Blue Banner Header -->
-                        # HTML table row: Header row
                         <tr>
-                            # HTML table cell: Blue header with white text
-                            # Inline CSS: Google blue (#1a73e8) background, white text
                             <td style="background-color: #1a73e8; padding: 24px 32px; text-align: center;">
-                                # HTML heading: Main title in header
-                                # Inline CSS: White color, specific font size and weight
                                 <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 400; letter-spacing: 0.25px;">CAMPUSKEY Verification Code</h1>
                             </td>
                         </tr>
                         
-                        # HTML comment: Marks email body content section
                         <!-- Email Body -->
-                        # HTML table row: Main content row
                         <tr>
-                            # HTML table cell: Dark background body content
-                            # Inline CSS: Dark gray background, light gray text
                             <td style="background-color: #202124; padding: 32px; color: #e8eaed; font-size: 14px; line-height: 20px;">
-                                # HTML paragraph: Greeting to user
                                 <p style="margin: 0 0 16px 0; color: #e8eaed;">Dear CAMPUSKEY User,</p>
                                 
-                                # HTML paragraph: Explanation of why email was sent
-                                # Python f-string variable: {email_address} inserts recipient's email
                                 <p style="margin: 0 0 16px 0; color: #e8eaed;">
                                     We received a request to access your CAMPUSKEY Account
-                                    # HTML span: Highlights email address in blue
                                     <span style="color: #8ab4f8; text-decoration: underline;">{email_address}</span>
                                     through your email address. Your CAMPUSKEY verification code is:
                                 </p>
                                 
-                                # HTML comment: Marks verification code display section
                                 <!-- Verification Code Display -->
-                                # HTML div: Container for centered code display
                                 <div style="margin: 24px 0; text-align: center;">
-                                    # HTML div: Large, monospace font for code display
-                                    # Inline CSS: Large font size, letter spacing, monospace font
-                                    # Python f-string variable: {code} inserts the 6-digit verification code
                                     <div style="font-size: 36px; font-weight: 400; color: #e8eaed; letter-spacing: 8px; font-family: 'Courier New', monospace;">
                                         {code}
                                     </div>
                                 </div>
                                 
-                                # HTML paragraph: Security warning message
-                                # Python f-string variable: {email_address} inserts email again
                                 <p style="margin: 16px 0; color: #e8eaed;">
                                     If you did not request this code, it is possible that someone else is trying to access the CAMPUSKEY Account
-                                    # HTML span: Highlights email address
                                     <span style="color: #8ab4f8; text-decoration: underline;">{email_address}</span>.
                                     Do not forward or give this code to anyone.
                                 </p>
                                 
-                                # HTML paragraph: Closing signature line 1
                                 <p style="margin: 24px 0 0 0; color: #e8eaed;">Sincerely yours,</p>
-                                # HTML paragraph: Closing signature line 2
                                 <p style="margin: 4px 0 0 0; color: #e8eaed;">The CAMPUSKEY Security Team</p>
                             </td>
                         </tr>
                         
-                        # HTML comment: Marks footer section
                         <!-- Footer -->
-                        # HTML table row: Footer row
                         <tr>
-                            # HTML table cell: Footer content with help center link
                             <td style="padding: 16px 32px; text-align: center;">
-                                # HTML paragraph: Footer text with link
-                                # Inline CSS: Smaller gray text
                                 <p style="margin: 0; color: #9aa0a6; font-size: 12px; line-height: 16px;">
                                     This email can't receive replies. For more information, visit the
-                                    # HTML anchor: Link to help center (placeholder #)
                                     <a href="#" style="color: #8ab4f8; text-decoration: underline;">CAMPUSKEY Help Center</a>.
                                 </p>
                             </td>

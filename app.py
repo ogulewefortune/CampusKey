@@ -254,59 +254,60 @@ def login():
             
             # Python conditional: Checks if verification code exists and is not expired
             # verification exists AND expiration time is in the future (EST timezone)
+            # Get current time in EST (as naive datetime for comparison with database)
             current_time_est = get_est_time()
-            if verification and verification.expires_at > current_time_est:
-                # Python comment: Marks code usage marking section
-                # Mark code as used
-                # Python attribute assignment: Marks verification code as used
-                # Prevents code from being reused for security
-                verification.used = True
-                # Python method call: Saves code usage status to database
-                db.session.commit()
-                
-                # Python function call: Logs in the user and creates session
-                # login_user() creates Flask-Login session for the user
-                login_user(user)
-                # Python function call: Records successful login attempt in database
-                # log_login_attempt() saves login event for security auditing
-                log_login_attempt(username, 'email', 'success', user.id)
-                # Python dictionary assignment: Stores authentication method in session
-                # session['auth_method'] stores how user logged in (email, otp, biometric, etc.)
-                session['auth_method'] = 'email'
-                # Python dictionary assignment: Stores login timestamp in session (EST timezone)
-                # get_est_time().isoformat() creates ISO format timestamp string
-                session['login_time'] = get_est_time().isoformat()
-                # Python dictionary assignment: Stores user role in session
-                # session['user_role'] stores role for quick access without database query
-                session['user_role'] = user.role  # Store role in session
-                
-                # Python comment: Marks role-based redirect section
-                # Redirect to role-specific dashboard
-                # Python conditional: Checks if user is admin
-                if user.role == 'admin':
-                    # Python return statement: Redirects to admin dashboard
-                    return redirect(url_for('admin_dashboard'))
-                # Python elif clause: Checks if user is professor
-                elif user.role == 'professor':
-                    # Python return statement: Redirects to professor dashboard
-                    return redirect(url_for('professor_dashboard'))
-                # Python else clause: Default case (student)
+            # Convert to naive datetime for comparison (SQLite stores naive datetimes)
+            current_time_naive = current_time_est.replace(tzinfo=None)
+            
+            if verification:
+                # expires_at from database is naive datetime (SQLite doesn't store timezone)
+                # Compare both as naive datetimes (both should be in EST)
+                if verification.expires_at > current_time_naive:
+                    # Python comment: Marks code usage marking section
+                    # Mark code as used
+                    # Python attribute assignment: Marks verification code as used
+                    # Prevents code from being reused for security
+                    verification.used = True
+                    # Python method call: Saves code usage status to database
+                    db.session.commit()
+                    
+                    # Python function call: Logs in the user and creates session
+                    # login_user() creates Flask-Login session for the user
+                    login_user(user)
+                    # Python function call: Records successful login attempt in database
+                    # log_login_attempt() saves login event for security auditing
+                    log_login_attempt(username, 'email', 'success', user.id)
+                    # Python dictionary assignment: Stores authentication method in session
+                    # session['auth_method'] stores how user logged in (email, otp, biometric, etc.)
+                    session['auth_method'] = 'email'
+                    # Python dictionary assignment: Stores login timestamp in session (EST timezone)
+                    # get_est_time().isoformat() creates ISO format timestamp string
+                    session['login_time'] = get_est_time().isoformat()
+                    # Python dictionary assignment: Stores user role in session
+                    # session['user_role'] stores role for quick access without database query
+                    session['user_role'] = user.role  # Store role in session
+                    
+                    # Python comment: Marks role-based redirect section
+                    # Redirect to role-specific dashboard
+                    # Python conditional: Checks if user is admin
+                    if user.role == 'admin':
+                        # Python return statement: Redirects to admin dashboard
+                        return redirect(url_for('admin_dashboard'))
+                    # Python elif clause: Checks if user is professor
+                    elif user.role == 'professor':
+                        # Python return statement: Redirects to professor dashboard
+                        return redirect(url_for('professor_dashboard'))
+                    # Python else clause: Default case (student)
+                    else:
+                        # Python return statement: Redirects to student dashboard
+                        return redirect(url_for('student_dashboard'))
                 else:
-                    # Python return statement: Redirects to student dashboard
-                    return redirect(url_for('student_dashboard'))
-            # Python else clause: Executes if verification code is invalid or expired
+                    # Expired verification code
+                    log_login_attempt(username, 'email', 'failed', user_id=user.id if user else None)
+                    return render_template('login.html', error='Invalid or expired verification code')
             else:
-                # Determine failure reason for better logging
-                if not verification:
-                    failure_reason = 'Invalid verification code'
-                elif verification.expires_at <= current_time_est:
-                    failure_reason = 'Expired verification code'
-                else:
-                    failure_reason = 'Verification code already used'
-                
-                # Python function call: Records failed login attempt (wrong or expired code)
+                # Invalid verification code
                 log_login_attempt(username, 'email', 'failed', user_id=user.id if user else None)
-                # Python return statement: Renders login page with error message
                 return render_template('login.html', error='Invalid or expired verification code')
         # Python else clause: Executes if no email was provided (uses TOTP instead)
         else:
@@ -399,7 +400,9 @@ def send_email_code_route():
     code = generate_verification_code()
     # Python variable: Calculates code expiration time (10 minutes from now) in EST
     # get_est_time() gets current EST time, timedelta(minutes=10) adds 10 minutes
-    expires_at = get_est_time() + timedelta(minutes=10)
+    # Convert to naive datetime for database storage (SQLite doesn't store timezone)
+    expires_at_aware = get_est_time() + timedelta(minutes=10)
+    expires_at = expires_at_aware.replace(tzinfo=None)  # Store as naive datetime
     
     # Python comment: Marks verification code storage section
     # Save verification code with the email from the form
