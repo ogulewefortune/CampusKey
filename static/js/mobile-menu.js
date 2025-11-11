@@ -71,16 +71,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close sidebar when clicking a nav item on mobile
         const navItems = sidebar.querySelectorAll('.nav-item');
         navItems.forEach(function(item) {
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function(e) {
+                // Allow the link to work normally
+                // Only close sidebar on mobile after a short delay to allow navigation
                 if (window.innerWidth <= 768) {
-                    sidebar.classList.remove('active');
-                    if (sidebarOverlay) {
-                        sidebarOverlay.classList.remove('active');
-                    }
-                    document.body.style.overflow = '';
+                    // Small delay to ensure navigation happens first
+                    setTimeout(function() {
+                        sidebar.classList.remove('active');
+                        if (sidebarOverlay) {
+                            sidebarOverlay.classList.remove('active');
+                        }
+                        document.body.style.overflow = '';
+                    }, 100);
                 }
             });
         });
+        
+        // Ensure sidebar and nav items are always clickable
+        sidebar.style.pointerEvents = 'auto';
+        const sidebarNav = sidebar.querySelector('.sidebar-nav');
+        if (sidebarNav) {
+            sidebarNav.style.pointerEvents = 'auto';
+        }
     }
 });
 
