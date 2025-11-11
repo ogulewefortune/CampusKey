@@ -1357,18 +1357,27 @@ def user_info():
     })
 
 
+# Initialize database when app starts (works with both direct run and gunicorn)
+# This ensures database tables are created even when using gunicorn on Render
+def initialize_database():
+    """Initialize database tables and sample data"""
+    try:
+        with app.app_context():
+            # Create all database tables defined in models
+            db.create_all()
+            # Create sample users and data if database is empty
+            create_sample_data()
+    except Exception as e:
+        # Log error but don't crash - database might already exist
+        print(f"Database initialization note: {e}")
+
+# Initialize database on import (for gunicorn/production)
+initialize_database()
+
 # Python conditional: Checks if script is being run directly (not imported as module)
 # __name__ == '__main__' is True when script is executed directly
+# This block only runs when using Flask dev server, not with gunicorn
 if __name__ == '__main__':
-    # Python context manager: Creates Flask application context
-    # app.app_context() is required for database operations outside request handlers
-    with app.app_context():
-        # Python method call: Creates all database tables defined in models
-        # db.create_all() reads model definitions and creates missing tables
-        db.create_all()
-        # Python function call: Creates sample users and data if database is empty
-        create_sample_data()
-    
     # Python variable: Gets port number from environment variable, defaults to 5001
     # os.environ.get() reads PORT env var, int() converts to integer, 5001 is default
     # Port 5001 is used because macOS AirPlay uses port 5000
