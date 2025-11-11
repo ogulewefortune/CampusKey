@@ -1377,5 +1377,6 @@ if __name__ == '__main__':
     # app.run() starts the web server
     # host='0.0.0.0' allows connections from any network interface
     # port=port uses the port number from environment or default
-    # debug=True enables debug mode (auto-reload on code changes, detailed error pages)
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # debug mode: Only enable in development (not in production)
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)

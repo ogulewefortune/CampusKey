@@ -1,0 +1,71 @@
+# Render Deployment Guide for CAMPUSKEY
+
+## Prerequisites
+- GitHub repository connected to Render
+- Render account
+
+## Steps to Deploy
+
+### 1. Environment Variables
+Set these in your Render dashboard under your web service settings:
+
+**Required:**
+- `SECRET_KEY`: A secure random string (e.g., generate with: `python -c "import secrets; print(secrets.token_hex(32))"`)
+- `DATABASE_URL`: Automatically provided by Render if you add a PostgreSQL database
+
+**Email Configuration (Optional but Recommended):**
+- `SMTP_SERVER`: Your SMTP server (e.g., `smtp.gmail.com`)
+- `SMTP_PORT`: SMTP port (e.g., `587`)
+- `SMTP_USERNAME`: Your email address
+- `SMTP_PASSWORD`: Your email app password (for Gmail, use App Password)
+- `FROM_EMAIL`: Sender email address
+
+**Optional:**
+- `FLASK_DEBUG`: Set to `False` for production (default is False)
+- `PORT`: Automatically set by Render (don't override)
+
+### 2. Database Setup
+1. In Render dashboard, add a PostgreSQL database
+2. Render will automatically set `DATABASE_URL` environment variable
+3. The app will automatically create tables on first run
+
+### 3. Build & Deploy Settings
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: (Leave empty - Procfile handles this)
+- **Python Version**: 3.11.4 (specified in runtime.txt)
+
+### 4. Files Already Configured
+✅ `Procfile` - Tells Render how to run the app  
+✅ `requirements.txt` - All dependencies including pytz  
+✅ `runtime.txt` - Python version  
+✅ `config.py` - Handles DATABASE_URL automatically  
+
+### 5. Post-Deployment
+After deployment:
+1. Visit your Render URL
+2. The app will automatically create database tables
+3. Sample users will be created if database is empty
+4. Test login with demo users
+
+## Troubleshooting
+
+### Database Issues
+- Ensure PostgreSQL database is added and connected
+- Check `DATABASE_URL` is set correctly
+- Database tables are created automatically on first run
+
+### Email Not Sending
+- Verify SMTP environment variables are set
+- Check email service logs in Render dashboard
+- For Gmail, ensure you're using an App Password, not regular password
+
+### Build Failures
+- Check that all dependencies in `requirements.txt` are valid
+- Ensure Python version in `runtime.txt` matches Render's supported versions
+
+## Security Checklist
+- [ ] Set a strong `SECRET_KEY` (don't use default)
+- [ ] Use environment variables for all sensitive data
+- [ ] Enable HTTPS (automatic on Render)
+- [ ] Don't commit `.env` files or secrets to GitHub
+
