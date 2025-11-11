@@ -57,8 +57,8 @@ def send_email_code(email_address, code, username):
     smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
     
     # Python variable: Gets SMTP port number from environment variable
-    # int() converts string to integer, defaults to 587 (TLS port)
-    smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    # Default to 465 (SSL) for Render compatibility - port 587 (TLS) often blocked
+    smtp_port = int(os.environ.get('SMTP_PORT', '465'))
     
     # Python variable: Gets SMTP username (email address) from environment variable
     # None if not set - used to check if email is configured
@@ -210,53 +210,53 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
             server = None
             connection_error = None
             
-            # Try connecting with the configured port
-            try:
-                if smtp_port == 465:
-                    # Python object creation: Creates SSL SMTP connection for port 465
-                    # smtplib.SMTP_SSL() creates encrypted connection directly
-                    # timeout=10 sets 10-second timeout for connection (faster failure on cloud)
-                    server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=10)
-                    # Python method call: Authenticates with SMTP server using credentials
-                    # login() sends username and password to server
+            # Try connecting - prioritize SSL port 465 for Render compatibility
+            # Port 587 (TLS) is often blocked on Render free tier
+            server = None
+            connection_successful = False
+            
+            # Strategy: Try SSL (465) first, then TLS (587) as fallback
+            ports_to_try = []
+            if smtp_port == 465:
+                ports_to_try = [(465, 'SSL'), (587, 'TLS')]  # Try SSL first, then TLS
+            else:
+                ports_to_try = [(587, 'TLS'), (465, 'SSL')]  # Try TLS first, then SSL fallback
+            
+            last_error = None
+            for port, method in ports_to_try:
+                try:
+                    print(f"Attempting {method} connection on port {port}...")
+                    if method == 'SSL':
+                        # SSL connection (port 465) - more reliable on Render
+                        server = smtplib.SMTP_SSL(smtp_server, port, timeout=15)
+                    else:
+                        # TLS connection (port 587)
+                        server = smtplib.SMTP(smtp_server, port, timeout=15)
+                        server.starttls()
+                    
+                    # Authenticate
+                    print(f"Authenticating with SMTP server...")
                     server.login(smtp_username, smtp_password)
-                else:
-                    # Python object creation: Creates SMTP connection for TLS (port 587)
-                    # smtplib.SMTP() connects to SMTP server on specified port
-                    # timeout=10 sets 10-second timeout for connection (faster failure on cloud)
-                    server = smtplib.SMTP(smtp_server, smtp_port, timeout=10)
-                    # Python method call: Starts TLS encryption for secure connection
-                    # starttls() upgrades connection to encrypted TLS
-                    server.starttls()
-                    # Python method call: Authenticates with SMTP server using credentials
-                    # login() sends username and password to server
-                    server.login(smtp_username, smtp_password)
-            except (OSError, ConnectionError, TimeoutError, smtplib.SMTPException) as e:
-                # Python comment: Catches network connection errors
-                # If TLS port 587 fails, try SSL port 465 as fallback
-                connection_error = e
-                error_msg = str(e)
-                print(f" Connection error on port {smtp_port}: {error_msg}")
-                
-                if smtp_port == 587:
-                    # Python print statement: Logs fallback attempt
-                    print(f" TLS connection failed, trying SSL on port 465...")
-                    try:
-                        # Python object creation: Retry with SSL connection
-                        server = smtplib.SMTP_SSL(smtp_server, 465, timeout=10)
-                        print(f" SSL connection established, authenticating...")
-                        server.login(smtp_username, smtp_password)
-                        # Python print statement: Logs successful fallback
-                        print(f" SSL connection successful on port 465")
-                    except Exception as ssl_error:
-                        # Python raise statement: Re-raises with both errors
-                        ssl_error_msg = str(ssl_error)
-                        print(f" SSL fallback also failed: {ssl_error_msg}")
-                        raise Exception(f"Both TLS (port 587) and SSL (port 465) connections failed. TLS error: {e}, SSL error: {ssl_error}")
-                else:
-                    # Python raise statement: Re-raises original error if not port 587
-                    print(f" Connection failed on port {smtp_port}: {error_msg}")
-                    raise
+                    print(f"✅ {method} connection successful on port {port}")
+                    connection_successful = True
+                    break
+                except (OSError, ConnectionError, TimeoutError, smtplib.SMTPException) as e:
+                    last_error = e
+                    error_msg = str(e)
+                    print(f"⚠️ {method} connection failed on port {port}: {error_msg}")
+                    if server:
+                        try:
+                            server.quit()
+                        except:
+                            pass
+                    server = None
+                    continue
+            
+            # If all connections failed, raise error
+            if not connection_successful:
+                raise Exception(f"Failed to connect to SMTP server. Tried ports 465 (SSL) and 587 (TLS). Last error: {last_error}")
+            
+            # Connection successful, continue with sending email
             # Python method call: Converts email message to string format
             # as_string() serializes the MIME message for sending
             text = msg.as_string()
