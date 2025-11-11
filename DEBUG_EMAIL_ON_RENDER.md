@@ -7,15 +7,15 @@
 3. Click "Logs" tab
 4. Look for these messages:
 
-### ✅ Good Signs:
-- `✅ Email sent successfully to [email]`
-- `✅ SSL connection successful on port 465`
+###  Good Signs:
+- ` Email sent successfully to [email]`
+- ` SSL connection successful on port 465`
 
-### ❌ Error Signs:
-- `❌ ERROR SENDING EMAIL TO [email]`
-- `❌ SMTP Authentication failed`
-- `❌ Connection failed`
-- `⚠️ EMAIL NOT CONFIGURED`
+###  Error Signs:
+- ` ERROR SENDING EMAIL TO [email]`
+- ` SMTP Authentication failed`
+- ` Connection failed`
+- ` EMAIL NOT CONFIGURED`
 
 ## Step 2: Test Email Configuration
 
@@ -49,10 +49,10 @@ Go to Render Dashboard → Your Service → Environment tab
 - `FROM_EMAIL` (not `from_email`)
 
 **Common Mistakes:**
-- ❌ Wrong case: `smtp_server` instead of `SMTP_SERVER`
-- ❌ Spaces in password: `abcd efgh` instead of `abcdefgh`
-- ❌ Using regular password instead of App Password
-- ❌ Missing variables
+-  Wrong case: `smtp_server` instead of `SMTP_SERVER`
+-  Spaces in password: `abcd efgh` instead of `abcdefgh`
+-  Using regular password instead of App Password
+-  Missing variables
 
 ## Step 4: Gmail App Password Setup
 
@@ -107,7 +107,7 @@ Port 465 (SSL) is more reliable on Render than port 587 (TLS).
 
 After setting variables, check logs for:
 ```
-✅ Email sent successfully to [your-email]
+ Email sent successfully to [your-email]
 ```
 
 If you see errors, they'll tell you exactly what's wrong!

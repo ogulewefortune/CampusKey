@@ -491,12 +491,16 @@ def send_email_code_route():
         print(f"⚠️ EMAIL NOT CONFIGURED - Showing code in response:")
         print(f"   SMTP_USERNAME: {'SET' if smtp_username else 'NOT SET'}")
         print(f"   SMTP_PASSWORD: {'SET' if smtp_password else 'NOT SET'}")
+        print(f"   SMTP_SERVER: {os.environ.get('SMTP_SERVER', 'NOT SET')}")
+        print(f"   SMTP_PORT: {os.environ.get('SMTP_PORT', 'NOT SET')}")
+        print(f"   FROM_EMAIL: {os.environ.get('FROM_EMAIL', 'NOT SET')}")
         print(f"   Code for {username}: {code}")
         # Still return success but include code in message
         return jsonify({
             'success': True,
-            'message': f'Email service not configured. Your verification code is: {code}\n\nTo enable email sending, set SMTP_USERNAME and SMTP_PASSWORD in Render environment variables.',
-            'code': code  # Include code in response for testing
+            'message': f'Email service not configured. Your verification code is: {code}\n\nTo enable email sending, set SMTP_USERNAME and SMTP_PASSWORD in Render environment variables.\n\nCheck Render logs for configuration details.',
+            'code': code,  # Include code in response for testing
+            'email_configured': False
         })
     
     # Try to send email synchronously first (with timeout)
@@ -549,19 +553,26 @@ def send_email_code_route():
         })
     elif email_result['success']:
         # Success!
+        print(f"✅ Email sent successfully to {email}")
         return jsonify({
             'success': True,
-            'message': f'Verification code sent successfully to {email}. Please check your inbox and spam folder.'
+            'message': f'Verification code sent successfully to {email}. Please check your inbox and spam folder.',
+            'email_configured': True,
+            'email_sent': True
         })
     else:
         # Failed - return error with code so user can still login
         error_msg = email_result['error'] or 'Unknown error'
         print(f"⚠️ Email failed but code is: {code} (for {username})")
+        print(f"   Error details: {error_msg}")
         return jsonify({
             'success': False,
             'error': f'Failed to send email: {error_msg}. Your verification code is: {code}',
             'code': code,  # Include code so user can still login
-            'message': f'Email sending failed. Your verification code is: {code}. Please use this code to login. Check Render logs for email errors.'
+            'message': f'Email sending failed. Your verification code is: {code}. Please use this code to login. Check Render logs for email errors.',
+            'email_configured': True,
+            'email_sent': False,
+            'email_error': error_msg
         })
 
 
@@ -2060,6 +2071,33 @@ def ensure_database_initialized():
         initialize_database()
         _db_initialized = True
 
+# Check email configuration endpoint (GET - no auth needed for debugging)
+@app.route('/api/check-email-config', methods=['GET'])
+def check_email_config():
+    """Check if email configuration is set up correctly"""
+    smtp_server = os.environ.get('SMTP_SERVER', 'NOT SET')
+    smtp_port = os.environ.get('SMTP_PORT', 'NOT SET')
+    smtp_username = os.environ.get('SMTP_USERNAME', 'NOT SET')
+    smtp_password = 'SET' if os.environ.get('SMTP_PASSWORD') else 'NOT SET'
+    from_email = os.environ.get('FROM_EMAIL', 'NOT SET')
+    
+    configured = all([
+        smtp_server != 'NOT SET',
+        smtp_port != 'NOT SET',
+        smtp_username != 'NOT SET',
+        smtp_password == 'SET',
+        from_email != 'NOT SET'
+    ])
+    
+    return jsonify({
+        'SMTP_SERVER': smtp_server,
+        'SMTP_PORT': smtp_port,
+        'SMTP_USERNAME': smtp_username,
+        'SMTP_PASSWORD': smtp_password,
+        'FROM_EMAIL': from_email,
+        'configured': configured
+    })
+
 # Test endpoint to verify SMTP configuration (for debugging)
 @app.route('/api/test-email', methods=['POST'])
 def test_email():
@@ -2094,9 +2132,15 @@ def test_email():
                     'test_email': test_email_address
                 })
             except Exception as e:
+                import traceback
+                error_traceback = traceback.format_exc()
+                print(f"❌ TEST EMAIL FAILED:")
+                print(f"   Error: {str(e)}")
+                print(f"   Traceback: {error_traceback}")
                 return jsonify({
                     'success': False,
                     'error': f'Failed to send test email: {str(e)}',
+                    'error_details': error_traceback,
                     'config': config_status,
                     'test_email': test_email_address
                 }), 500
@@ -2108,9 +2152,11 @@ def test_email():
             }), 400
             
     except Exception as e:
+        import traceback
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'traceback': traceback.format_exc()
         }), 500
 
 

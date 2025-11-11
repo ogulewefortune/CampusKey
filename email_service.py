@@ -172,13 +172,18 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
         # Python try block: Attempts to send email, catches exceptions
         try:
             # Python print statement: Outputs status message to console
-            print(f"\n Attempting to send email...")
+            print(f"\n{'='*60}")
+            print(f"📧 ATTEMPTING TO SEND EMAIL")
+            print(f"{'='*60}")
             # Python print statement: Displays sender email address
             print(f"   From: {from_email}")
             # Python print statement: Displays recipient email address
             print(f"   To: {email_address}")
             # Python print statement: Displays SMTP server and port
             print(f"   Server: {smtp_server}:{smtp_port}")
+            print(f"   Username: {smtp_username}")
+            print(f"   Password: {'SET (' + str(len(smtp_password)) + ' chars)' if smtp_password else 'NOT SET'}")
+            print(f"{'='*60}\n")
             
             # Python object creation: Creates multipart email message
             # 'alternative' allows both HTML and plain text versions
