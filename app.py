@@ -2113,13 +2113,19 @@ def ensure_database_initialized():
 @app.route('/api/check-email-config', methods=['GET'])
 def check_email_config():
     """Check if email configuration is set up correctly"""
+    # Check SendGrid configuration (preferred for Render free tier)
+    email_service = os.environ.get('EMAIL_SERVICE', '').lower()
+    sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+    sendgrid_configured = email_service == 'sendgrid' and sendgrid_api_key is not None
+    
+    # Check SMTP configuration (fallback)
     smtp_server = os.environ.get('SMTP_SERVER', 'NOT SET')
     smtp_port = os.environ.get('SMTP_PORT', 'NOT SET')
     smtp_username = os.environ.get('SMTP_USERNAME', 'NOT SET')
     smtp_password = 'SET' if os.environ.get('SMTP_PASSWORD') else 'NOT SET'
     from_email = os.environ.get('FROM_EMAIL', 'NOT SET')
     
-    configured = all([
+    smtp_configured = all([
         smtp_server != 'NOT SET',
         smtp_port != 'NOT SET',
         smtp_username != 'NOT SET',
@@ -2127,45 +2133,74 @@ def check_email_config():
         from_email != 'NOT SET'
     ])
     
+    # Overall configuration status (either SendGrid or SMTP)
+    configured = sendgrid_configured or smtp_configured
+    
     return jsonify({
+        # SendGrid configuration
+        'EMAIL_SERVICE': email_service if email_service else 'NOT SET',
+        'SENDGRID_API_KEY': 'SET' if sendgrid_api_key else 'NOT SET',
+        'sendgrid_configured': sendgrid_configured,
+        # SMTP configuration
         'SMTP_SERVER': smtp_server,
         'SMTP_PORT': smtp_port,
         'SMTP_USERNAME': smtp_username,
         'SMTP_PASSWORD': smtp_password,
         'FROM_EMAIL': from_email,
-        'configured': configured
+        'smtp_configured': smtp_configured,
+        # Overall status
+        'configured': configured,
+        'preferred_method': 'SendGrid' if sendgrid_configured else ('SMTP' if smtp_configured else 'None')
     })
 
-# Test endpoint to verify SMTP configuration (for debugging)
+# Test endpoint to verify email configuration (for debugging)
 @app.route('/api/test-email', methods=['POST'])
 def test_email():
-    """Test email sending configuration"""
+    """Test email sending configuration (supports both SendGrid and SMTP)"""
     try:
         data = request.get_json()
         test_email_address = data.get('email', 'test@example.com')
         
-        # Check configuration
+        # Check SendGrid configuration
+        email_service = os.environ.get('EMAIL_SERVICE', '').lower()
+        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+        sendgrid_configured = email_service == 'sendgrid' and sendgrid_api_key is not None
+        
+        # Check SMTP configuration
         smtp_server = os.environ.get('SMTP_SERVER', 'NOT SET')
         smtp_port = os.environ.get('SMTP_PORT', 'NOT SET')
         smtp_username = os.environ.get('SMTP_USERNAME', 'NOT SET')
         smtp_password = 'SET' if os.environ.get('SMTP_PASSWORD') else 'NOT SET'
         from_email = os.environ.get('FROM_EMAIL', 'NOT SET')
         
+        smtp_configured = all([
+            smtp_username != 'NOT SET',
+            smtp_password == 'SET'
+        ])
+        
         config_status = {
+            # SendGrid config
+            'EMAIL_SERVICE': email_service if email_service else 'NOT SET',
+            'SENDGRID_API_KEY': 'SET' if sendgrid_api_key else 'NOT SET',
+            'sendgrid_configured': sendgrid_configured,
+            # SMTP config
             'SMTP_SERVER': smtp_server,
             'SMTP_PORT': smtp_port,
             'SMTP_USERNAME': smtp_username,
             'SMTP_PASSWORD': smtp_password,
-            'FROM_EMAIL': from_email
+            'FROM_EMAIL': from_email,
+            'smtp_configured': smtp_configured
         }
         
-        # Try to send a test email
-        if smtp_username != 'NOT SET' and smtp_password != 'NOT SET':
+        # Try to send a test email (send_email_code handles SendGrid/SMTP automatically)
+        if sendgrid_configured or smtp_configured:
             try:
                 result = send_email_code(test_email_address, '123456', 'test_user')
+                method_used = 'SendGrid' if sendgrid_configured else 'SMTP'
                 return jsonify({
                     'success': True,
-                    'message': 'Test email sent successfully!',
+                    'message': f'Test email sent successfully via {method_used}!',
+                    'method_used': method_used,
                     'config': config_status,
                     'test_email': test_email_address
                 })
@@ -2185,8 +2220,9 @@ def test_email():
         else:
             return jsonify({
                 'success': False,
-                'error': 'SMTP not configured - missing SMTP_USERNAME or SMTP_PASSWORD',
-                'config': config_status
+                'error': 'Email not configured - need either SendGrid (EMAIL_SERVICE=sendgrid + SENDGRID_API_KEY) or SMTP (SMTP_USERNAME + SMTP_PASSWORD)',
+                'config': config_status,
+                'tip': 'For Render free tier, use SendGrid: Set EMAIL_SERVICE=sendgrid and SENDGRID_API_KEY'
             }), 400
             
     except Exception as e:
