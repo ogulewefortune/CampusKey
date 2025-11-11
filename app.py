@@ -481,20 +481,28 @@ def send_email_code_route():
     db.session.commit()
     
     # Python comment: Marks email sending section
+    # Check if SendGrid is configured first (works on Render free tier)
+    email_service = os.environ.get('EMAIL_SERVICE', '').lower()
+    sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+    
     # Check if SMTP is configured before attempting to send
     smtp_username = os.environ.get('SMTP_USERNAME')
     smtp_password = os.environ.get('SMTP_PASSWORD', '').strip()
     
-    if not smtp_username or not smtp_password:
+    # If neither SendGrid nor SMTP is configured, show code in response
+    if (email_service != 'sendgrid' or not sendgrid_api_key) and (not smtp_username or not smtp_password):
         # SMTP not configured - show code in response for testing
         # This allows OTP to work even if email fails (code is shown)
         print(f"[WARNING] EMAIL NOT CONFIGURED - Showing code in response:")
+        print(f"   EMAIL_SERVICE: {os.environ.get('EMAIL_SERVICE', 'NOT SET')}")
+        print(f"   SENDGRID_API_KEY: {'SET' if sendgrid_api_key else 'NOT SET'}")
         print(f"   SMTP_USERNAME: {'SET' if smtp_username else 'NOT SET'}")
         print(f"   SMTP_PASSWORD: {'SET' if smtp_password else 'NOT SET'}")
         print(f"   SMTP_SERVER: {os.environ.get('SMTP_SERVER', 'NOT SET')}")
         print(f"   SMTP_PORT: {os.environ.get('SMTP_PORT', 'NOT SET')}")
         print(f"   FROM_EMAIL: {os.environ.get('FROM_EMAIL', 'NOT SET')}")
         print(f"   Code for {username}: {code}")
+        print(f"   TIP: Add EMAIL_SERVICE=sendgrid and SENDGRID_API_KEY to Render to enable emails!")
         # Still return success but include code in message
         return jsonify({
             'success': True,
