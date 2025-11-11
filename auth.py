@@ -1,112 +1,221 @@
 from flask import request, session, abort
 from functools import wraps
 from flask_login import current_user
-from models import LoginAttempt, ActiveSession, db
+from models import LoginAttempt, ActiveSession, User, db
 from datetime import datetime, timedelta
-import sqllite3
+import pytz
+
+# EST timezone
+EST = pytz.timezone('US/Eastern')
+
+
+def normalize_username(username):
+    """
+    Normalize username to lowercase.
+    This ensures case-insensitive username matching.
+    
+    Args:
+        username: Username string (can be None)
+    
+    Returns:
+        Lowercase username string, or None if input is None
+    """
+    if username is None:
+        return None
+    return username.lower().strip()
+
+
+def get_est_time():
+    """
+    Get current time in EST timezone.
+    
+    Returns:
+        datetime object in EST timezone
+    """
+    return datetime.now(EST)
+
 
 def log_login_attempt(username, method, status, user_id=None):
-    # create a tuple in database for login attempts
-    con = sqllite3.connect("instance/campuskey.db")
-    cur = con.cursor()
-
-    # TODO create table (if not exist) using schema
-
-    # inserts into table values depending on if userID is provided
-    if user_id is None:
-        data = {username, method, status, user_id}
-        cur.execute("INSERT INTO table VALUES(?, ?, ?, ?)", data)
-    else:
-        data = {username, method, status}
-        cur.execute("INSERT INTO table VALUES(?, ?, ?, NULL)", data)
-
-    # commits the insert into the database
-    con.commit()
-    return
+    """
+    Log a login attempt to the database.
+    
+    Args:
+        username: Username that attempted login
+        method: Authentication method used ('otp', 'email', 'biometric', 'rfid', 'password')
+        status: 'success' or 'failed'
+        user_id: User ID if user exists, None for failed attempts with non-existent users
+    """
+    try:
+        # Get IP address and user agent from request if available
+        ip_address = request.remote_addr if request else None
+        user_agent = request.headers.get('User-Agent') if request else None
+        
+        # Normalize username to lowercase
+        normalized_username = normalize_username(username)
+        
+        # Create login attempt record using SQLAlchemy
+        login_attempt = LoginAttempt(
+            username=normalized_username,
+            method=method,
+            status=status,
+            user_id=user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            timestamp=get_est_time()
+        )
+        
+        db.session.add(login_attempt)
+        db.session.commit()
+    except Exception as e:
+        # Log error but don't break the application
+        print(f"Error logging login attempt: {e}")
+        db.session.rollback()
 
 
 
 def track_session_activity(user_id, session_id):
+    """
+    Track or update active session activity.
+    Creates new session if it doesn't exist, or updates last_activity timestamp.
+    
+    Args:
+        user_id: User ID for the session
+        session_id: Flask session ID
+    """
+    try:
+        # Check if session exists
+        active_session = ActiveSession.query.filter_by(session_id=session_id).first()
+        
+        if active_session is None:
+            # Session does not exist - create new one
+            ip_address = request.remote_addr if request else None
+            user_agent = request.headers.get('User-Agent') if request else None
+            
+            active_session = ActiveSession(
+                user_id=user_id,
+                session_id=session_id,
+                login_time=get_est_time(),
+                last_activity=get_est_time(),
+                ip_address=ip_address,
+                user_agent=user_agent
+            )
+            db.session.add(active_session)
+        else:
+            # Session exists - update last_activity timestamp
+            active_session.last_activity = get_est_time()
+        
+        db.session.commit()
+    except Exception as e:
+        print(f"Error tracking session activity: {e}")
+        db.session.rollback()
 
-    con = sqllite3.connect("instance/campuskey.db")
-    cur = con.cursor()
-
-    # check if session exists
-    cur = cur.execute("SELECT user FROM table WHERE session = ?", session_id)
-    result = cur.fetchone()
-
-    if result is None: # Session does not exist
-        data = {user_id, session_id}
-        cur.execute("INSERT INTO table VALUES(?, ?)", data)
-    else: # Session Exists
-        cur.execute("UPDATE table SET time=? WHERE session=?", datetime.now().time(), session_id)
-
-    con.commit()
-    return
-
-def get_active_session():
-    con = sqllite3.connect("instance/campuskey.db")
-    cur = con.cursor()
-
-    # get all sessions and current time
-    cur.execute("SELECT * FROM table")
-    results = cur.fetchall()
-    time = datetime.now().time()
-
-    # check for expired sessions, and remove them
-    for result in results:
-        if (time - result[2]).total_seconds() > 7200: # expire time = 2 hours
-            cur.execute("DELETE FROM table WHERE session=?", result[1])
-            con.commit()
-            results.remove(result)
-    return results
+def get_active_sessions():
+    """
+    Get all active sessions, removing expired ones.
+    Sessions expire after 2 hours of inactivity.
+    
+    Returns:
+        List of ActiveSession objects that are still active
+    """
+    try:
+        # Calculate expiration time (2 hours ago) in EST
+        expiration_time = get_est_time() - timedelta(hours=2)
+        
+        # Find and delete expired sessions
+        expired_sessions = ActiveSession.query.filter(
+            ActiveSession.last_activity < expiration_time
+        ).all()
+        
+        for session in expired_sessions:
+            db.session.delete(session)
+        
+        db.session.commit()
+        
+        # Return all remaining active sessions
+        return ActiveSession.query.all()
+    except Exception as e:
+        print(f"Error getting active sessions: {e}")
+        db.session.rollback()
+        return []
 
 # decorator functions to ensure proper role authentication
-def role_required(func):
-    def wrapper(*args):
-        if current_user.is_authenticated:
-            if current_user.role in args:
-                func()
-                return wrapper
-    print("Error 403")
-    return wrapper
+def role_required(*roles):
+    def decorator(func):
+        from functools import wraps
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                if not current_user or not current_user.is_authenticated:
+                    abort(403)
+                if current_user.role not in roles:
+                    abort(403)
+                return func(*args, **kwargs)
+            except AttributeError:
+                abort(403)
+        return wrapper
+    return decorator
 
 
 def admin_required(func):
-    def wrapper(*args):
-        if "admin" in args:
-            func()
-            return wrapper
-    print("Error 403")
+    from functools import wraps
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            if not current_user or not current_user.is_authenticated:
+                abort(403)
+            if current_user.role != 'admin':
+                abort(403)
+            return func(*args, **kwargs)
+        except AttributeError:
+            abort(403)
     return wrapper
 
 # checks that user exists and has the expected role
 def verify_user_role(username, expected_role):
-    con = sqllite3.connect("instance/campuskey.db")
-    cur = con.cursor()
-
-    # get role for provided user
-    cur.execute("SELECT role FROM table WHERE user=?", username)
-    result = cur.fetchone()
+    """
+    Verify that a user exists and has the expected role.
     
-    if result is None or result != expected_role:
+    Args:
+        username: Username to check
+        expected_role: Expected role ('admin', 'professor', 'student')
+    
+    Returns:
+        True if user exists and has expected role, False otherwise
+    """
+    try:
+        # Normalize username to lowercase for case-insensitive lookup
+        normalized_username = normalize_username(username)
+        user = User.query.filter_by(username=normalized_username).first()
+        
+        if user is None:
+            return False
+        
+        return user.role == expected_role
+    except Exception as e:
+        print(f"Error verifying user role: {e}")
         return False
-    else:
-        return True
 
 def get_user_role(username):
-    con = sqllite3.connect("instance/campuskey.db")
-    cur = con.cursor()
-
-    # get role for provided user
-    cur.execute("SELECT role FROM table WHERE user=?", username)
-    result = cur.fetchone()
+    """
+    Get the role of a user by username.
     
-    # Checks if user exists, if they do prints their role
-    if result is None:
-        print("User does not exist")
-    else:
-        print(f"The role of {username} is: {result}")
-    return
+    Args:
+        username: Username to look up
+    
+    Returns:
+        User's role string if user exists, None otherwise
+    """
+    try:
+        # Normalize username to lowercase for case-insensitive lookup
+        normalized_username = normalize_username(username)
+        user = User.query.filter_by(username=normalized_username).first()
+        
+        if user is None:
+            return None
+        
+        return user.role
+    except Exception as e:
+        print(f"Error getting user role: {e}")
+        return None
 
 

@@ -53,7 +53,9 @@ from email_service import generate_verification_code, send_email_code
 # admin_required: Decorator to restrict routes to admin users only
 # verify_user_role: Checks if user has specific role
 # get_user_role: Retrieves user's role from database
-from auth import log_login_attempt, role_required, admin_required, verify_user_role, get_user_role
+# normalize_username: Converts username to lowercase for case-insensitive matching
+# get_est_time: Gets current time in EST timezone
+from auth import log_login_attempt, role_required, admin_required, verify_user_role, get_user_role, normalize_username, get_est_time
 
 
 # Python variable: Creates Flask application instance
@@ -214,18 +216,24 @@ def login():
     if request.method == 'POST':
         # Python variable: Gets username from form data
         # request.form.get() retrieves form field value, returns None if not found
-        username = request.form.get('username')
+        username_input = request.form.get('username')
         # Python variable: Gets OTP verification code from form data
         otp_code = request.form.get('otp_code')
         # Python variable: Gets email address from form data
         email = request.form.get('email')
         
-        # Python variable: Queries database for user with matching username
+        # Normalize username to lowercase for case-insensitive matching
+        username = normalize_username(username_input) if username_input else None
+        
+        # Python variable: Queries database for user with matching username (case-insensitive)
         # .filter_by() filters users, .first() returns first match or None
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first() if username else None
         
         # Python conditional: Checks if user was not found
         if not user:
+            # Log failed login attempt - wrong username
+            if username:
+                log_login_attempt(username, 'email' if email else 'otp', 'failed', user_id=None)
             # Python return statement: Renders login template with error message
             # render_template() renders HTML template with provided variables
             return render_template('login.html', error='User not found')
@@ -245,8 +253,9 @@ def login():
             ).first()
             
             # Python conditional: Checks if verification code exists and is not expired
-            # verification exists AND expiration time is in the future
-            if verification and verification.expires_at > datetime.utcnow():
+            # verification exists AND expiration time is in the future (EST timezone)
+            current_time_est = get_est_time()
+            if verification and verification.expires_at > current_time_est:
                 # Python comment: Marks code usage marking section
                 # Mark code as used
                 # Python attribute assignment: Marks verification code as used
@@ -264,9 +273,9 @@ def login():
                 # Python dictionary assignment: Stores authentication method in session
                 # session['auth_method'] stores how user logged in (email, otp, biometric, etc.)
                 session['auth_method'] = 'email'
-                # Python dictionary assignment: Stores login timestamp in session
-                # datetime.utcnow().isoformat() creates ISO format timestamp string
-                session['login_time'] = datetime.utcnow().isoformat()
+                # Python dictionary assignment: Stores login timestamp in session (EST timezone)
+                # get_est_time().isoformat() creates ISO format timestamp string
+                session['login_time'] = get_est_time().isoformat()
                 # Python dictionary assignment: Stores user role in session
                 # session['user_role'] stores role for quick access without database query
                 session['user_role'] = user.role  # Store role in session
@@ -287,8 +296,16 @@ def login():
                     return redirect(url_for('student_dashboard'))
             # Python else clause: Executes if verification code is invalid or expired
             else:
-                # Python function call: Records failed login attempt
-                log_login_attempt(username, 'email', 'failed')
+                # Determine failure reason for better logging
+                if not verification:
+                    failure_reason = 'Invalid verification code'
+                elif verification.expires_at <= current_time_est:
+                    failure_reason = 'Expired verification code'
+                else:
+                    failure_reason = 'Verification code already used'
+                
+                # Python function call: Records failed login attempt (wrong or expired code)
+                log_login_attempt(username, 'email', 'failed', user_id=user.id if user else None)
                 # Python return statement: Renders login page with error message
                 return render_template('login.html', error='Invalid or expired verification code')
         # Python else clause: Executes if no email was provided (uses TOTP instead)
@@ -304,8 +321,8 @@ def login():
                 log_login_attempt(username, 'otp', 'success', user.id)
                 # Python dictionary assignment: Stores OTP auth method in session
                 session['auth_method'] = 'otp'
-                # Python dictionary assignment: Stores login timestamp
-                session['login_time'] = datetime.utcnow().isoformat()
+                # Python dictionary assignment: Stores login timestamp (EST timezone)
+                session['login_time'] = get_est_time().isoformat()
                 # Python dictionary assignment: Stores user role
                 session['user_role'] = user.role  # Store role in session
                 
@@ -325,10 +342,10 @@ def login():
                     return redirect(url_for('student_dashboard'))
             # Python else clause: Executes if TOTP verification failed
             else:
-                # Python function call: Records failed TOTP login attempt
-                log_login_attempt(username, 'otp', 'failed')
+                # Python function call: Records failed TOTP login attempt (wrong OTP code)
+                log_login_attempt(username, 'otp', 'failed', user_id=user.id if user else None)
                 # Python return statement: Renders login page with error message
-                return render_template('login.html', error='Invalid credentials')
+                return render_template('login.html', error='Invalid OTP code')
     
     # Python return statement: Renders login page for GET requests (display form)
     # This executes when user visits /login page (not submitting form)
@@ -361,8 +378,10 @@ def send_email_code_route():
     
     # Python comment: Marks user existence check section
     # Check if user exists
+    # Normalize username to lowercase for case-insensitive matching
+    normalized_username = normalize_username(username)
     # Python variable: Queries database for user with matching username
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=normalized_username).first()
     # Python conditional: Checks if user was not found
     if not user:
         # Python return statement: Returns JSON error response with 404 status code
@@ -378,9 +397,9 @@ def send_email_code_route():
     # Python variable: Generates random 6-digit verification code
     # generate_verification_code() returns string like '123456'
     code = generate_verification_code()
-    # Python variable: Calculates code expiration time (10 minutes from now)
-    # datetime.utcnow() gets current UTC time, timedelta(minutes=10) adds 10 minutes
-    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    # Python variable: Calculates code expiration time (10 minutes from now) in EST
+    # get_est_time() gets current EST time, timedelta(minutes=10) adds 10 minutes
+    expires_at = get_est_time() + timedelta(minutes=10)
     
     # Python comment: Marks verification code storage section
     # Save verification code with the email from the form
@@ -437,17 +456,22 @@ def biometric_login():
     # Python variable: Parses JSON data from request body
     data = request.get_json()
     # Python variable: Extracts username from JSON data
-    username = data.get('username')
+    username_input = data.get('username')
     
     # Python conditional: Validates username is provided
-    if not username:
+    if not username_input:
         # Python return statement: Returns JSON error response with 400 status code
         return jsonify({'success': False, 'error': 'Username is required'}), 400
+    
+    # Normalize username to lowercase for case-insensitive matching
+    username = normalize_username(username_input)
     
     # Python variable: Queries database for user with matching username
     user = User.query.filter_by(username=username).first()
     # Python conditional: Checks if user was not found
     if not user:
+        # Log failed login attempt - wrong username
+        log_login_attempt(username, 'biometric', 'failed', user_id=None)
         # Python return statement: Returns JSON error response with 404 status code
         return jsonify({'success': False, 'error': 'User not found'}), 404
     
@@ -459,8 +483,8 @@ def biometric_login():
     log_login_attempt(username, 'biometric', 'success', user.id)
     # Python dictionary assignment: Stores biometric auth method in session
     session['auth_method'] = 'biometric'
-    # Python dictionary assignment: Stores login timestamp
-    session['login_time'] = datetime.utcnow().isoformat()
+    # Python dictionary assignment: Stores login timestamp (EST timezone)
+    session['login_time'] = get_est_time().isoformat()
     # Python dictionary assignment: Stores user role in session
     session['user_role'] = user.role  # Store role in session
     
@@ -495,17 +519,22 @@ def rfid_login():
     # Python variable: Parses JSON data from request body
     data = request.get_json()
     # Python variable: Extracts username from JSON data
-    username = data.get('username')
+    username_input = data.get('username')
     
     # Python conditional: Validates username is provided
-    if not username:
+    if not username_input:
         # Python return statement: Returns JSON error response with 400 status code
         return jsonify({'success': False, 'error': 'Username is required'}), 400
+    
+    # Normalize username to lowercase for case-insensitive matching
+    username = normalize_username(username_input)
     
     # Python variable: Queries database for user with matching username
     user = User.query.filter_by(username=username).first()
     # Python conditional: Checks if user was not found
     if not user:
+        # Log failed login attempt - wrong username
+        log_login_attempt(username, 'rfid', 'failed', user_id=None)
         # Python return statement: Returns JSON error response with 404 status code
         return jsonify({'success': False, 'error': 'User not found'}), 404
     
@@ -517,8 +546,8 @@ def rfid_login():
     log_login_attempt(username, 'rfid', 'success', user.id)
     # Python dictionary assignment: Stores RFID auth method in session
     session['auth_method'] = 'rfid'
-    # Python dictionary assignment: Stores login timestamp
-    session['login_time'] = datetime.utcnow().isoformat()
+    # Python dictionary assignment: Stores login timestamp (EST timezone)
+    session['login_time'] = get_est_time().isoformat()
     # Python dictionary assignment: Stores user role in session
     session['user_role'] = user.role  # Store role in session
     
@@ -738,9 +767,15 @@ def add_user():
     # Python variable: Parses JSON data from request body
     data = request.get_json()
     # Python variable: Extracts username from JSON data
-    username = data.get('username')
+    username_input = data.get('username')
     # Python variable: Extracts role from JSON data, defaults to 'student' if not provided
     role = data.get('role', 'student')
+    
+    # Normalize username to lowercase for case-insensitive matching
+    username = normalize_username(username_input) if username_input else None
+    
+    if not username:
+        return jsonify({'success': False, 'error': 'Username is required'}), 400
     
     # Python conditional: Checks if username already exists in database
     if User.query.filter_by(username=username).first():
@@ -993,7 +1028,7 @@ def submit_grade():
         # Python attribute assignment: Updates percentage score
         existing_grade.percentage = percentage
         # Python attribute assignment: Updates timestamp to current time
-        existing_grade.updated_at = datetime.utcnow()
+        existing_grade.updated_at = get_est_time()
     # Python else clause: Executes if grade doesn't exist (create new)
     else:
         # Python object creation: Creates new Grade instance
@@ -1104,7 +1139,7 @@ def recent_activity():
     current_session = {
         'method': session.get('auth_method', 'unknown'),              # Gets auth method from session
         'ip_address': request.remote_addr,                             # Gets client IP address
-        'timestamp': datetime.utcnow(),                                 # Gets current UTC timestamp
+        'timestamp': get_est_time(),                                 # Gets current EST timestamp
         'status': 'success',                                            # Sets status as success
         'user_agent': request.headers.get('User-Agent', 'Unknown')     # Gets browser user agent string
     }
@@ -1230,7 +1265,7 @@ def generate_passcode_api():
         'success': True,                        # Indicates operation succeeded
         'passcode': passcode,                   # The generated passcode string
         'length': length,                       # Length of generated passcode
-        'timestamp': datetime.utcnow().isoformat() # ISO format timestamp of generation
+        'timestamp': get_est_time().isoformat() # ISO format timestamp of generation (EST)
     })
 
 
