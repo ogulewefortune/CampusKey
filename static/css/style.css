@@ -1666,17 +1666,23 @@ body {
 .sidebar {
     width: 280px;
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-    min-height: calc(100vh - 70px);
+    height: calc(100vh - 70px);
     position: fixed;
     left: 0;
     top: 70px;
-    padding: 24px 0;
+    padding: 0;
     z-index: 999;
     pointer-events: auto;
     box-shadow: 4px 0 30px rgba(0, 0, 0, 0.2);
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
 }
 
 .sidebar::before {
@@ -1697,7 +1703,29 @@ body {
     pointer-events: auto;
     position: relative;
     z-index: 1001;
+    padding: 24px 0;
+    flex: 1;
 }
+
+/* Custom scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 
 .nav-item {
     display: flex;
