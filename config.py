@@ -60,3 +60,20 @@ class Config:
     # Setting to False improves performance by not tracking every model change
     # This is recommended by Flask-SQLAlchemy documentation for better performance
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Class variable: Enable connection pooling for PostgreSQL (important for Render)
+    # These settings optimize database connections for production use
+    # Only apply to PostgreSQL, not SQLite
+    if DATABASE_URL and DATABASE_URL.startswith('postgres'):
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_size': 5,           # Number of connections to keep in the pool
+            'max_overflow': 10,       # Maximum connections beyond pool_size
+            'pool_pre_ping': True,    # Test connections before using them (handles dropped connections)
+            'pool_recycle': 3600,      # Recycle connections after 1 hour (prevents stale connections)
+            'connect_args': {
+                'connect_timeout': 10  # Connection timeout in seconds
+            }
+        }
+    else:
+        # No special engine options needed for SQLite
+        SQLALCHEMY_ENGINE_OPTIONS = {}
