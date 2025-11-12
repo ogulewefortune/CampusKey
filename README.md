@@ -4,6 +4,8 @@
 
 A modern, secure access management system for universities featuring email-based authentication, biometric login, role-based access control, and comprehensive security features.
 
+**Live Application**: [https://campuskey.onrender.com](https://campuskey.onrender.com)
+
 ---
 
 ## Features
@@ -52,7 +54,8 @@ A modern, secure access management system for universities featuring email-based
    ```
 
 5. **Access the application**
-   - Open your browser and navigate to: `http://localhost:5001`
+   - **Live Version**: [https://campuskey.onrender.com](https://campuskey.onrender.com)
+   - **Local Development**: Open your browser and navigate to: `http://localhost:5001`
    - Note: Port 5001 is used because macOS AirPlay uses port 5000
 
 ---
