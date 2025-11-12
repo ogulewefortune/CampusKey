@@ -371,15 +371,32 @@ def login():
                     # Python function call: Records successful login attempt in database
                     # log_login_attempt() saves login event for security auditing
                     log_login_attempt(username, 'email', 'success', user.id)
+                    # Python function call: Track active session for monitoring
+                    # track_session_activity() creates/updates active session record
+                    from auth import track_session_activity
+                    import hashlib
+                    # Generate a unique session ID from Flask session
+                    session_id = hashlib.sha256(str(session.get('_id', id(session))).encode()).hexdigest()[:32]
+                    track_session_activity(user.id, session_id)
                     # Python dictionary assignment: Stores authentication method in session
                     # session['auth_method'] stores how user logged in (email, otp, biometric, etc.)
                     session['auth_method'] = 'email'
-                    # Python dictionary assignment: Stores login timestamp in session (EST timezone)
-                    # get_est_time().isoformat() creates ISO format timestamp string
-                    session['login_time'] = get_est_time().isoformat()
+                    # Python dictionary assignment: Stores login timestamp in session (UTC timezone)
+                    # get_utc_time().isoformat() creates ISO format timestamp string
+                    session['login_time'] = get_utc_time().isoformat()
                     # Python dictionary assignment: Stores user role in session
                     # session['user_role'] stores role for quick access without database query
                     session['user_role'] = user.role  # Store role in session
+                    # Python function call: Store device fingerprint for security tracking
+                    # This tracks the device and IP address being used
+                    try:
+                        user_agent = request.headers.get('User-Agent', '')
+                        ip_address = request.remote_addr
+                        device_info = {}  # Will be collected by JavaScript if available
+                        fingerprint_hash = create_device_fingerprint(device_info, user_agent, ip_address)
+                        store_device_fingerprint(user.id, fingerprint_hash, device_info, user_agent, ip_address)
+                    except Exception as e:
+                        print(f"Device fingerprint error: {e}")
                     
                     # Python comment: Marks role-based redirect section
                     # Redirect to role-specific dashboard
@@ -414,12 +431,26 @@ def login():
                 login_user(user)
                 # Python function call: Records successful TOTP login
                 log_login_attempt(username, 'otp', 'success', user.id)
+                # Python function call: Track active session for monitoring
+                from auth import track_session_activity
+                import hashlib
+                session_id = hashlib.sha256(str(id(session)).encode()).hexdigest()[:32]
+                track_session_activity(user.id, session_id)
                 # Python dictionary assignment: Stores OTP auth method in session
                 session['auth_method'] = 'otp'
-                # Python dictionary assignment: Stores login timestamp (EST timezone)
-                session['login_time'] = get_est_time().isoformat()
+                # Python dictionary assignment: Stores login timestamp (UTC timezone)
+                session['login_time'] = get_utc_time().isoformat()
                 # Python dictionary assignment: Stores user role
                 session['user_role'] = user.role  # Store role in session
+                # Python function call: Store device fingerprint for security tracking
+                try:
+                    user_agent = request.headers.get('User-Agent', '')
+                    ip_address = request.remote_addr
+                    device_info = {}
+                    fingerprint_hash = create_device_fingerprint(device_info, user_agent, ip_address)
+                    store_device_fingerprint(user.id, fingerprint_hash, device_info, user_agent, ip_address)
+                except Exception as e:
+                    print(f"Device fingerprint error: {e}")
                 
                 # Python comment: Marks role-based redirect section
                 # Redirect to role-specific dashboard
@@ -1145,8 +1176,13 @@ def webauthn_authenticate_complete():
         # Log in the user
         login_user(user, remember=True)  # Use remember=True to persist session
         log_login_attempt(user.username, 'biometric', 'success', user.id)
+        # Python function call: Track active session for monitoring
+        from auth import track_session_activity
+        import hashlib
+        session_id = hashlib.sha256(str(id(session)).encode()).hexdigest()[:32]
+        track_session_activity(user.id, session_id)
         session['auth_method'] = 'biometric'
-        session['login_time'] = get_est_time().isoformat()
+        session['login_time'] = get_utc_time().isoformat()
         session['user_role'] = user.role
         
         # Clear WebAuthn challenge session (but keep user logged in)
@@ -1352,6 +1388,35 @@ def admin_dashboard():
     # Python dictionary assignment: Counts total number of users
     # User.query.count() returns total count of all users in database
     user_data['total_users'] = User.query.count()
+    
+    # Python comment: Marks active sessions section
+    # Get all currently active sessions (users who are online)
+    # Python import statement: Imports get_active_sessions function from auth module
+    from auth import get_active_sessions
+    from models import ActiveSession
+    # Python dictionary assignment: Gets all active sessions
+    # get_active_sessions() returns list of ActiveSession objects for users currently logged in
+    active_sessions = get_active_sessions()
+    user_data['active_sessions'] = active_sessions
+    user_data['active_users_count'] = len(active_sessions)
+    
+    # Python comment: Marks device fingerprinting section
+    # Get device information for active sessions
+    # Python dictionary assignment: Gets device fingerprints for active users
+    user_data['device_info'] = {}
+    for active_session in active_sessions:
+        user_id = active_session.user_id
+        user = User.query.get(user_id)
+        if user:
+            # Get most recent device fingerprint for this user
+            device = DeviceFingerprint.query.filter_by(user_id=user_id).order_by(DeviceFingerprint.last_seen_at.desc()).first()
+            if device:
+                user_data['device_info'][user_id] = {
+                    'ip_address': device.ip_address,
+                    'user_agent': device.user_agent,
+                    'last_seen': device.last_seen_at,
+                    'is_trusted': device.is_trusted
+                }
     
     # Python return statement: Renders admin dashboard template with user data
     # render_template() renders HTML template and passes data dictionary to template
@@ -2110,6 +2175,18 @@ def ensure_database_initialized():
     if not _db_initialized:
         initialize_database()
         _db_initialized = True
+    
+    # Track session activity for authenticated users (updates last_activity timestamp)
+    if current_user.is_authenticated:
+        try:
+            from auth import track_session_activity
+            import hashlib
+            # Generate session ID from Flask session
+            session_id = hashlib.sha256(str(id(session)).encode()).hexdigest()[:32]
+            track_session_activity(current_user.id, session_id)
+        except Exception as e:
+            # Don't break the request if session tracking fails
+            pass
 
 # Check email configuration endpoint (GET - no auth needed for debugging)
 @app.route('/api/check-email-config', methods=['GET'])

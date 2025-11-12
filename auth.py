@@ -156,15 +156,15 @@ def track_session_activity(user_id, session_id):
             active_session = ActiveSession(
                 user_id=user_id,
                 session_id=session_id,
-                login_time=get_est_time(),
-                last_activity=get_est_time(),
+                login_time=get_utc_time(),
+                last_activity=get_utc_time(),
                 ip_address=ip_address,
                 user_agent=user_agent
             )
             db.session.add(active_session)
         else:
             # Session exists - update last_activity timestamp
-            active_session.last_activity = get_est_time()
+            active_session.last_activity = get_utc_time()
         
         db.session.commit()
     except Exception as e:
@@ -175,17 +175,20 @@ def get_active_sessions():
     """
     Get all active sessions, removing expired ones.
     Sessions expire after 2 hours of inactivity.
+    Uses UTC timezone for consistency.
     
     Returns:
         List of ActiveSession objects that are still active
     """
     try:
-        # Calculate expiration time (2 hours ago) in EST
-        expiration_time = get_est_time() - timedelta(hours=2)
+        # Calculate expiration time (2 hours ago) in UTC
+        expiration_time = get_utc_time() - timedelta(hours=2)
+        # Convert to naive datetime for comparison (SQLite doesn't store timezone)
+        expiration_time_naive = expiration_time
         
         # Find and delete expired sessions
         expired_sessions = ActiveSession.query.filter(
-            ActiveSession.last_activity < expiration_time
+            ActiveSession.last_activity < expiration_time_naive
         ).all()
         
         for session in expired_sessions:
@@ -193,8 +196,8 @@ def get_active_sessions():
         
         db.session.commit()
         
-        # Return all remaining active sessions
-        return ActiveSession.query.all()
+        # Return all remaining active sessions, ordered by last activity (most recent first)
+        return ActiveSession.query.order_by(ActiveSession.last_activity.desc()).all()
     except Exception as e:
         print(f"Error getting active sessions: {e}")
         db.session.rollback()

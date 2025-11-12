@@ -31,6 +31,55 @@
                 <h3>Recent Activity</h3>
                 <p class="stat-value">{{ data.recent_logins|length }}</p>
             </div>
+            <div class="stat-card">
+                <h3>Users Online</h3>
+                <p class="stat-value">{{ data.active_users_count }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ACTIVE SESSIONS (CURRENTLY ONLINE USERS) -->
+    <section class="security-section">
+        <h2 class="section-header">ACTIVE SESSIONS (CURRENTLY ONLINE)</h2>
+        <div class="content-card">
+            {% if data.active_sessions %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>IP Address</th>
+                        <th>Device Info</th>
+                        <th>Login Time</th>
+                        <th>Last Activity</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in data.active_sessions %}
+                    {% set user = session.user %}
+                    {% set device = data.device_info.get(session.user_id) %}
+                    <tr>
+                        <td><strong>{{ user.username }}</strong></td>
+                        <td><span class="role-badge-small role-{{ user.role }}">{{ user.role|upper }}</span></td>
+                        <td>{{ session.ip_address or 'N/A' }}</td>
+                        <td>
+                            {% if device %}
+                                <small>{{ device.user_agent[:50] }}{% if device.user_agent|length > 50 %}...{% endif %}</small>
+                            {% else %}
+                                <small>No device info</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ session.login_time.strftime('%Y-%m-%d %H:%M:%S') if session.login_time else 'N/A' }}</td>
+                        <td>{{ session.last_activity.strftime('%Y-%m-%d %H:%M:%S') if session.last_activity else 'N/A' }}</td>
+                        <td><span class="status-badge success">ONLINE</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No active sessions. No users are currently online.</p>
+            {% endif %}
         </div>
     </section>
 
@@ -141,6 +190,30 @@
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
+}
+
+.role-badge-small {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.role-badge-small.role-admin {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.role-badge-small.role-professor {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.role-badge-small.role-student {
+    background: #dcfce7;
+    color: #16a34a;
 }
 </style>
 {% endblock %}
