@@ -80,9 +80,18 @@
                     {# Email input group: Flex container for email input and send code button #}
                     <div class="email-input-group">
                         {# Email input: Email type input with placeholder text and required validation #}
-                        <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+                        <input type="email" id="email" name="email" placeholder="your.email@lakeheadu.ca" required>
                         {# Send code button: Button that triggers sendEmailCode() function to send verification code #}
                         <button type="button" id="sendCodeBtn" class="btn-send-code" onclick="sendEmailCode()">Send Code</button>
+                    </div>
+                    {# Email domain warning message: Hidden by default, shown when email domain is invalid #}
+                    <div id="emailDomainWarning" class="email-domain-warning" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 22h20L12 2z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span>You're not allowed. You're outside this organization. Only @lakeheadu.ca emails are permitted.</span>
                     </div>
                 </div>
 
@@ -222,6 +231,33 @@ async function handleBiometricLogin() {
     }
 }
 
+{# JavaScript function: Validates email domain to ensure it's @lakeheadu.ca #}
+function validateEmailDomain(email) {
+    {# JavaScript variable: Checks if email ends with @lakeheadu.ca domain #}
+    const isValidDomain = email.toLowerCase().endsWith('@lakeheadu.ca');
+    {# JavaScript variable: Gets reference to warning message element #}
+    const warningDiv = document.getElementById('emailDomainWarning');
+    {# JavaScript variable: Gets reference to email input element #}
+    const emailInput = document.getElementById('email');
+    
+    {# JavaScript conditional: Shows or hides warning based on domain validity #}
+    if (!isValidDomain && email.length > 0) {
+        {# JavaScript property: Shows warning message if domain is invalid #}
+        warningDiv.style.display = 'flex';
+        {# JavaScript property: Adds error styling to email input #}
+        emailInput.classList.add('email-error');
+        {# JavaScript return: Returns false to indicate invalid email #}
+        return false;
+    } else {
+        {# JavaScript property: Hides warning message if domain is valid #}
+        warningDiv.style.display = 'none';
+        {# JavaScript property: Removes error styling from email input #}
+        emailInput.classList.remove('email-error');
+        {# JavaScript return: Returns true to indicate valid email #}
+        return true;
+    }
+}
+
 // Check WebAuthn availability on page load
 document.addEventListener('DOMContentLoaded', async function() {
     const biometricBtn = document.getElementById('biometricBtn');
@@ -231,6 +267,60 @@ document.addEventListener('DOMContentLoaded', async function() {
             biometricBtn.disabled = true;
             biometricBtn.title = 'Biometric authentication not available on this device';
             document.getElementById('biometricBtnText').textContent = 'Biometric Not Available';
+        }
+    }
+    
+    {# JavaScript variable: Gets reference to email input element #}
+    const emailInput = document.getElementById('email');
+    {# JavaScript conditional: Checks if email input exists #}
+    if (emailInput) {
+        {# JavaScript event listener: Validates email domain on blur (when user leaves field) #}
+        emailInput.addEventListener('blur', function() {
+            {# JavaScript variable: Gets current email value #}
+            const email = this.value;
+            {# JavaScript conditional: Only validate if email is not empty #}
+            if (email.length > 0) {
+                {# JavaScript function call: Validates email domain #}
+                validateEmailDomain(email);
+            }
+        });
+        
+        {# JavaScript event listener: Validates email domain on input (as user types) #}
+        emailInput.addEventListener('input', function() {
+            {# JavaScript variable: Gets current email value #}
+            const email = this.value;
+            {# JavaScript conditional: Only validate if email contains @ symbol #}
+            if (email.includes('@')) {
+                {# JavaScript function call: Validates email domain #}
+                validateEmailDomain(email);
+            } else {
+                {# JavaScript property: Hides warning if no @ symbol yet #}
+                document.getElementById('emailDomainWarning').style.display = 'none';
+                {# JavaScript property: Removes error styling #}
+                this.classList.remove('email-error');
+            }
+        });
+        
+        {# JavaScript event listener: Validates email domain on form submit #}
+        const loginForm = document.getElementById('loginForm');
+        {# JavaScript conditional: Checks if login form exists #}
+        if (loginForm) {
+            {# JavaScript event listener: Adds submit event handler to form #}
+            loginForm.addEventListener('submit', function(e) {
+                {# JavaScript variable: Gets email value #}
+                const email = emailInput.value;
+                {# JavaScript conditional: Prevents form submission if email domain is invalid #}
+                if (email && !validateEmailDomain(email)) {
+                    {# JavaScript preventDefault: Stops form submission #}
+                    e.preventDefault();
+                    {# JavaScript alert: Shows error message #}
+                    alert('Error: Only @lakeheadu.ca email addresses are allowed. You\'re not allowed. You\'re outside this organization.');
+                    {# JavaScript focus: Focuses email input for user to correct #}
+                    emailInput.focus();
+                    {# JavaScript return: Exits function #}
+                    return false;
+                }
+            });
         }
     }
 });
@@ -255,6 +345,14 @@ function sendEmailCode() {
         {# JavaScript alert: Shows error if email is missing #}
         alert('Please enter your email address');
         {# JavaScript return: Exits function early if validation fails #}
+        return;
+    }
+    
+    {# JavaScript conditional: Validates email domain before proceeding #}
+    if (!validateEmailDomain(email)) {
+        {# JavaScript alert: Shows error if email domain is invalid #}
+        alert('Error: Only @lakeheadu.ca email addresses are allowed. You\'re not allowed. You\'re outside this organization.');
+        {# JavaScript return: Exits function early if domain validation fails #}
         return;
     }
     

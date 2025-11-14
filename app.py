@@ -315,6 +315,12 @@ def login():
         # Python variable: Gets email address from form data
         email = request.form.get('email')
         
+        # Python comment: Validates email domain if email is provided
+        # Check if email ends with @lakeheadu.ca domain
+        if email and not email.lower().endswith('@lakeheadu.ca'):
+            # Python return statement: Renders login page with domain error message
+            return render_template('login.html', error='You\'re not allowed. You\'re outside this organization. Only @lakeheadu.ca email addresses are permitted.')
+        
         # Normalize username to lowercase for case-insensitive matching
         username = normalize_username(username_input) if username_input else None
         
@@ -501,6 +507,16 @@ def send_email_code_route():
         # jsonify() converts Python dict to JSON response
         # 400 = Bad Request (missing required parameters)
         return jsonify({'success': False, 'error': 'Username and email are required'}), 400
+    
+    # Python comment: Validates email domain to ensure it's @lakeheadu.ca
+    # Check if email ends with @lakeheadu.ca domain
+    if not email.lower().endswith('@lakeheadu.ca'):
+        # Python return statement: Returns JSON error response indicating invalid domain
+        # 403 = Forbidden (access denied due to policy)
+        return jsonify({
+            'success': False, 
+            'error': 'You\'re not allowed. You\'re outside this organization. Only @lakeheadu.ca email addresses are permitted.'
+        }), 403
     
     # Python comment: Marks user existence check section
     # Check if user exists
