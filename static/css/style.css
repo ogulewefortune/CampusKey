@@ -87,6 +87,33 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+/* Ensure all images are responsive */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Ensure tables don't break layout */
+table {
+    width: 100%;
+    table-layout: auto;
+}
+
+/* Prevent horizontal scroll on small screens */
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* Ensure main containers are responsive */
+.container,
+.content-wrapper,
+.main-wrapper {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* CAMPUSKEY Login Page Styles */
 .campuskey-login-container {
     display: flex;
@@ -2374,33 +2401,150 @@ body {
     pointer-events: auto;
 }
 
-/* Responsive Design - Mobile First Approach */
-@media (max-width: 1024px) {
-    /* Tablet styles */
+/* ============================================
+   RESPONSIVE DESIGN - COMPREHENSIVE BREAKPOINTS
+   ============================================ */
+
+/* Extra Large Desktop (1400px and up) */
+@media (min-width: 1400px) {
     .main-content {
-        padding: 24px;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .security-dashboard,
+    .modern-dashboard {
+        max-width: 1400px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Large Desktop (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .main-content {
+        padding: 40px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Desktop (1024px - 1199px) */
+@media (min-width: 1024px) and (max-width: 1199px) {
+    .sidebar {
+        width: 260px;
+    }
+    
+    .main-content {
+        margin-left: 260px;
+        padding: 32px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
     }
     
     .dashboard-header {
+        padding: 36px 40px;
+    }
+}
+
+/* Tablet Landscape (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    /* Sidebar adjustments */
+    .sidebar {
+        width: 240px;
+    }
+    
+    .main-content {
+        margin-left: 240px;
         padding: 24px;
     }
     
+    /* Dashboard adjustments */
+    .dashboard-header {
+        padding: 32px 28px;
+        border-radius: var(--radius-lg);
+    }
+    
+    .header-title {
+        font-size: 28px;
+    }
+    
+    .header-greeting h2 {
+        font-size: 22px;
+    }
+    
+    /* Stats grid - 2 columns on tablet */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .stat-card {
+        padding: 24px;
+    }
+    
+    .stat-value {
+        font-size: 32px;
+    }
+    
+    /* Content cards */
+    .content-card {
+        padding: 28px;
+    }
+    
+    /* Personalized section */
     .personalized-section {
         flex-direction: column;
         text-align: center;
-        padding: 32px 24px;
+        padding: 40px 32px;
     }
     
     .personalized-illustration {
         margin-top: 24px;
+        flex: 0 0 auto;
+    }
+    
+    /* Tables - allow horizontal scroll */
+    .data-table {
+        font-size: 13px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 12px;
+    }
+    
+    /* Action grids */
+    .action-grid,
+    .status-grid,
+    .help-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    /* Login page tablet */
+    .login-form-section {
+        width: 40%;
+    }
+    
+    .login-image-section {
+        width: 60%;
     }
 }
 
-@media (max-width: 768px) {
-    /* Mobile styles */
-    
+/* Tablet Portrait & Mobile (max-width: 767px) */
+@media (max-width: 767px) {
     /* Header adjustments */
     .top-header {
+        height: 60px;
         padding: 12px 16px;
     }
     
@@ -2413,16 +2557,17 @@ body {
     }
     
     .logo-square {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
     }
     
     .mobile-menu-toggle {
         display: flex;
         align-items: center;
         justify-content: center;
-        min-width: 40px;
-        min-height: 40px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
     }
     
     .header-center {
@@ -2430,21 +2575,22 @@ body {
     }
     
     .user-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 12px;
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
     }
     
     /* Sidebar mobile behavior */
     .sidebar {
         transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
+        transition: transform var(--transition-base);
         z-index: 1000;
         width: 280px;
+        max-width: 85vw;
         position: fixed;
-        top: 56px;
+        top: 60px;
         left: 0;
-        height: calc(100vh - 56px);
+        height: calc(100vh - 60px);
         overflow-y: auto;
         pointer-events: auto;
     }
@@ -2456,18 +2602,181 @@ body {
     
     .sidebar-overlay {
         display: block;
-        top: 56px;
+        top: 60px;
         z-index: 999;
     }
     
     .app-layout {
-        margin-top: 56px;
+        margin-top: 0;
     }
     
     .main-content {
         margin-left: 0;
+        padding: 20px 16px;
+        min-height: calc(100vh - 60px);
+        margin-top: 60px;
+    }
+    
+    /* Dashboard adjustments */
+    .dashboard-header {
+        padding: 24px 20px;
+        margin-bottom: 24px;
+        border-radius: var(--radius-lg);
+    }
+    
+    .header-title {
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    
+    .header-greeting h2 {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .role-badge {
+        padding: 12px 18px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    /* Stats grid - single column on mobile */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-top: 20px;
+    }
+    
+    .stat-card {
+        padding: 24px;
+        border-radius: var(--radius-lg);
+    }
+    
+    .stat-card h3 {
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .stat-value {
+        font-size: 32px;
+    }
+    
+    /* Content cards */
+    .content-card {
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: var(--radius-lg);
+    }
+    
+    /* Section headers */
+    .section-header {
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+    
+    /* Personalized section */
+    .personalized-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 32px 20px;
+        margin-bottom: 24px;
+        border-radius: var(--radius-lg);
+    }
+    
+    .section-title {
+        font-size: 22px;
+        margin-bottom: 10px;
+    }
+    
+    .section-description {
+        font-size: 14px;
+    }
+    
+    .personalized-illustration {
+        flex: 0 0 auto;
+        margin-top: 20px;
+    }
+    
+    .illustration-monitor {
+        transform: scale(0.75);
+    }
+    
+    /* Tables mobile - horizontal scroll */
+    .data-table {
+        font-size: 13px;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+    
+    .data-table thead {
+        display: block;
+    }
+    
+    .data-table tbody {
+        display: block;
+    }
+    
+    .data-table tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 12px 8px;
+        font-size: 13px;
+        white-space: normal;
+        word-wrap: break-word;
+    }
+    
+    .admin-table-container {
         padding: 16px;
-        min-height: calc(100vh - 56px);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--radius-lg);
+    }
+    
+    .admin-table {
+        min-width: 600px;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    
+    /* Grids mobile - single column */
+    .action-grid,
+    .status-grid,
+    .help-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .action-card,
+    .status-card,
+    .help-card {
+        padding: 24px;
+        border-radius: var(--radius-lg);
+    }
+    
+    /* Cards mobile */
+    .card {
+        padding: 20px;
+        margin-bottom: 16px;
+        border-radius: var(--radius-lg);
+    }
+    
+    .card h3 {
+        font-size: 18px;
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
     }
     
     /* Login page mobile */
@@ -2492,7 +2801,7 @@ body {
     }
     
     .campuskey-title {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
         margin-bottom: 1.5rem;
     }
     
@@ -2504,89 +2813,31 @@ body {
     /* Forms mobile */
     .campuskey-login-form input {
         font-size: 16px; /* Prevents zoom on iOS */
-        padding: 0.875rem;
+        padding: 14px 16px;
     }
     
     .campuskey-login-form .email-input-group {
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 12px;
     }
     
     .campuskey-login-form .btn-send-code {
         width: 100%;
-        padding: 0.875rem;
+        padding: 14px 20px;
     }
     
     /* Buttons mobile - touch friendly */
+    .btn-login {
+        padding: 16px 24px;
+        font-size: 15px;
+    }
+    
     .btn-alt-auth,
     .btn-biometric,
     .btn-rfid {
-        padding: 1rem;
-        font-size: 1rem;
+        padding: 14px 20px;
+        font-size: 15px;
         min-height: 48px; /* Touch target size */
-    }
-    
-    /* Dashboard mobile */
-    .dashboard-header {
-        padding: 20px 16px;
-        margin-bottom: 24px;
-    }
-    
-    .header-title {
-        font-size: 24px;
-        margin-bottom: 12px;
-    }
-    
-    .header-greeting h2 {
-        font-size: 20px;
-    }
-    
-    .personalized-section {
-        padding: 24px 16px;
-        margin-bottom: 24px;
-    }
-    
-    .section-title {
-        font-size: 24px;
-    }
-    
-    .section-description {
-        font-size: 14px;
-    }
-    
-    /* Grids mobile */
-    .action-grid,
-    .status-grid,
-    .help-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    /* Tables mobile */
-    .admin-table-container {
-        padding: 1rem;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .admin-table {
-        min-width: 600px; /* Allow horizontal scroll */
-    }
-    
-    .admin-table th,
-    .admin-table td {
-        padding: 0.75rem 0.5rem;
-        font-size: 14px;
-    }
-    
-    /* Cards mobile */
-    .card {
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .card-title {
-        font-size: 1.25rem;
     }
     
     /* Modern dashboard mobile */
@@ -2594,33 +2845,159 @@ body {
         padding: 0;
     }
     
-    .personalized-illustration {
-        flex: 0 0 auto;
-        margin-top: 20px;
-    }
-    
-    .illustration-monitor {
-        transform: scale(0.8);
+    .security-dashboard {
+        padding: 0;
     }
 }
 
+/* Small Mobile Devices (max-width: 480px) */
 @media (max-width: 480px) {
-    /* Small mobile devices */
-    
+    /* Header adjustments */
     .top-header {
+        height: 56px;
         padding: 10px 12px;
     }
     
     .header-title {
+        font-size: 13px;
+    }
+    
+    .logo-square {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
         font-size: 12px;
     }
     
+    .mobile-menu-toggle {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px;
+    }
+    
+    /* Sidebar adjustments */
+    .sidebar {
+        width: 260px;
+        max-width: 90vw;
+        top: 56px;
+        height: calc(100vh - 56px);
+    }
+    
+    .sidebar-overlay {
+        top: 56px;
+    }
+    
+    .main-content {
+        padding: 16px 12px;
+        margin-top: 56px;
+        min-height: calc(100vh - 56px);
+    }
+    
+    /* Dashboard adjustments */
+    .dashboard-header {
+        padding: 20px 16px;
+        margin-bottom: 20px;
+        border-radius: var(--radius-md);
+    }
+    
+    .header-title {
+        font-size: 22px;
+        margin-bottom: 12px;
+    }
+    
+    .header-greeting h2 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    .role-badge {
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+    
+    /* Stats grid */
+    .stats-grid {
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .stat-card h3 {
+        font-size: 11px;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+    }
+    
+    /* Content cards */
+    .content-card {
+        padding: 16px;
+        margin-top: 16px;
+    }
+    
+    /* Section headers */
+    .section-header {
+        font-size: 11px;
+        margin-bottom: 10px;
+    }
+    
+    /* Personalized section */
+    .personalized-section {
+        padding: 24px 16px;
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 20px;
+    }
+    
+    .section-description {
+        font-size: 13px;
+    }
+    
+    /* Tables */
+    .data-table th,
+    .data-table td {
+        padding: 10px 6px;
+        font-size: 12px;
+    }
+    
+    .admin-table-container {
+        padding: 12px;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 16px;
+    }
+    
+    .action-card,
+    .status-card,
+    .help-card {
+        padding: 20px;
+    }
+    
+    /* Login page */
     .login-form-section {
         padding: 1.5rem 1rem;
     }
     
     .campuskey-title {
-        font-size: 1.25rem;
+        font-size: 1.5rem;
+        margin-bottom: 1.25rem;
     }
     
     .campuskey-logo svg {
@@ -2628,66 +3005,195 @@ body {
         height: 50px;
     }
     
+    /* Forms */
+    .campuskey-login-form input {
+        padding: 12px 14px;
+        font-size: 16px;
+    }
+    
+    .campuskey-login-form .btn-send-code {
+        padding: 12px 18px;
+        font-size: 14px;
+    }
+    
+    /* Buttons */
+    .btn-login {
+        padding: 14px 20px;
+        font-size: 14px;
+    }
+    
+    .btn-alt-auth,
+    .btn-biometric,
+    .btn-rfid {
+        padding: 12px 18px;
+        font-size: 14px;
+        min-height: 44px;
+    }
+}
+
+/* Extra Small Mobile Devices (max-width: 360px) */
+@media (max-width: 360px) {
     .main-content {
-        padding: 12px;
+        padding: 12px 8px;
     }
     
     .dashboard-header {
         padding: 16px 12px;
     }
     
-    .section-title {
+    .header-title {
         font-size: 20px;
     }
     
-    .admin-table th,
-    .admin-table td {
-        padding: 0.5rem 0.25rem;
-        font-size: 12px;
+    .stat-card {
+        padding: 16px;
     }
     
-    .btn-alt-auth,
-    .btn-biometric,
-    .btn-rfid {
-        font-size: 0.9rem;
-        padding: 0.875rem;
+    .stat-value {
+        font-size: 24px;
+    }
+    
+    .content-card {
+        padding: 14px;
+    }
+    
+    .campuskey-title {
+        font-size: 1.25rem;
+    }
+    
+    .login-form-section {
+        padding: 1.25rem 0.75rem;
     }
 }
 
-/* Touch device optimizations */
+/* Touch Device Optimizations */
 @media (hover: none) and (pointer: coarse) {
-    /* Touch devices */
+    /* Touch devices - ensure minimum touch targets */
     .nav-item {
-        padding: 14px 20px; /* Larger touch target */
+        padding: 16px 24px; /* Larger touch target - minimum 44px height */
+        min-height: 44px;
     }
     
     .icon-btn {
         width: 44px;
         height: 44px; /* Minimum 44x44px touch target */
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .mobile-menu-toggle {
+        min-width: 44px;
+        min-height: 44px;
     }
     
     .btn-alt-auth,
     .btn-biometric,
-    .btn-rfid {
-        min-height: 48px;
+    .btn-rfid,
+    .btn-login,
+    .campuskey-login-form .btn-send-code {
+        min-height: 48px; /* Recommended touch target */
+        padding: 14px 20px;
     }
     
-    /* Remove hover effects on touch devices */
+    /* Reduce hover effects on touch devices */
     .nav-item:hover {
-        background: rgba(255, 255, 255, 0.05);
+        transform: none;
+        padding-left: 24px;
+    }
+    
+    .stat-card:hover,
+    .content-card:hover,
+    .action-card:hover {
+        transform: none;
+    }
+    
+    /* Ensure buttons are easily tappable */
+    button,
+    .btn-login,
+    .btn-alt-auth {
+        -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+        tap-highlight-color: rgba(102, 126, 234, 0.2);
     }
 }
 
-/* Landscape mobile */
-@media (max-width: 768px) and (orientation: landscape) {
+/* Landscape Mobile Orientation */
+@media (max-width: 767px) and (orientation: landscape) {
     .login-image-section {
         height: 150px;
+        min-height: 150px;
     }
     
     .login-form-section {
         min-height: auto;
         padding: 1.5rem;
     }
+    
+    .campuskey-login-container {
+        min-height: auto;
+    }
+    
+    .main-content {
+        padding: 16px;
+    }
+    
+    .dashboard-header {
+        padding: 20px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar,
+    .top-header,
+    .mobile-menu-toggle,
+    .sidebar-overlay {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 0;
+    }
+    
+    .stat-card,
+    .content-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+/* High DPI / Retina Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .logo-square svg,
+    .campuskey-logo svg {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .campuskey-logo {
+        animation: none;
+    }
+    
+    .campuskey-title {
+        animation: none;
+        background-size: 100% 100%;
+    }
+}
+
+/* Dark Mode Support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+    /* Can be implemented later if dark mode is desired */
 }
 
 
