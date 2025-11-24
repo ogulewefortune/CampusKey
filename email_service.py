@@ -186,7 +186,10 @@ The CAMPUSKEY Security Team
                 raise Exception(f"SendGrid API returned status {response.status}")
                 
     except urllib.error.HTTPError as e:
-        error_body = e.read().decode('utf-8')
+        try:
+            error_body = e.read().decode('utf-8')
+        except Exception:
+            error_body = "Unable to read error response"
         print(f"[ERROR] SendGrid API error: {e.code} - {error_body}")
         raise Exception(f"SendGrid API error: {e.code} - {error_body}")
     except Exception as e:
@@ -522,10 +525,16 @@ This email can't receive replies. For more information, visit the CAMPUSKEY Help
             # Python method call: Sends email to recipient
             # sendmail() sends the email and returns dictionary of failed recipients
             # Empty dictionary {} means success, non-empty means some failures
-            result = server.sendmail(from_email, [email_address], text)
-            # Python method call: Closes SMTP connection
-            # quit() properly closes the connection to the server
-            server.quit()
+            try:
+                result = server.sendmail(from_email, [email_address], text)
+            finally:
+                # Python method call: Always close SMTP connection to free resources
+                # quit() properly closes the connection to the server
+                # Use try/finally to ensure cleanup even if sendmail fails
+                try:
+                    server.quit()
+                except Exception:
+                    pass  # Ignore errors during cleanup
             
             # Python conditional: Checks if email sending failed
             # result is empty dict {} on success, non-empty dict on failure

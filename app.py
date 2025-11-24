@@ -371,6 +371,23 @@ def login():
                     # Python method call: Saves code usage status to database
                     db.session.commit()
                     
+                    # Cleanup old expired/used verification codes to manage memory
+                    try:
+                        cleanup_threshold = get_utc_time() - timedelta(days=1)
+                        old_codes = EmailVerificationCode.query.filter(
+                            (EmailVerificationCode.expires_at < cleanup_threshold) |
+                            (EmailVerificationCode.used == True)
+                        ).limit(1000).all()
+                        
+                        if old_codes:
+                            for code in old_codes:
+                                db.session.delete(code)
+                            db.session.commit()
+                    except Exception as cleanup_error:
+                        # Don't fail the main operation if cleanup fails
+                        print(f"Error cleaning up old verification codes: {cleanup_error}")
+                        db.session.rollback()
+                    
                     # Python function call: Logs in the user and creates session
                     # login_user() creates Flask-Login session for the user
                     login_user(user)
@@ -558,6 +575,23 @@ def send_email_code_route():
     db.session.add(verification)
     # Python method call: Saves verification code to database
     db.session.commit()
+    
+    # Cleanup old expired/used verification codes periodically to manage memory
+    try:
+        cleanup_threshold = get_utc_time() - timedelta(days=1)
+        old_codes = EmailVerificationCode.query.filter(
+            (EmailVerificationCode.expires_at < cleanup_threshold) |
+            (EmailVerificationCode.used == True)
+        ).limit(500).all()
+        
+        if old_codes:
+            for code in old_codes:
+                db.session.delete(code)
+            db.session.commit()
+    except Exception as cleanup_error:
+        # Don't fail the main operation if cleanup fails
+        print(f"Error cleaning up old verification codes: {cleanup_error}")
+        db.session.rollback()
     
     # Python comment: Marks email sending section
     # Check if SendGrid is configured first (works on Render free tier)
@@ -782,6 +816,9 @@ def serialize_authentication_options(options):
 def store_device_fingerprint(user_id, fingerprint_hash, device_info, user_agent, ip_address):
     """Store or update device fingerprint"""
     try:
+        # Limit user agent length to prevent memory bloat
+        user_agent_limited = (user_agent[:500] if user_agent else None) if user_agent else None
+        
         fingerprint = DeviceFingerprint.query.filter_by(
             user_id=user_id,
             fingerprint_hash=fingerprint_hash
@@ -790,20 +827,46 @@ def store_device_fingerprint(user_id, fingerprint_hash, device_info, user_agent,
         if fingerprint:
             # Update last seen timestamp
             fingerprint.last_seen_at = get_est_time()
-            fingerprint.device_info = json.dumps(device_info) if device_info else None
+            # Limit device_info size to prevent memory bloat
+            device_info_str = json.dumps(device_info) if device_info else None
+            if device_info_str and len(device_info_str) > 2000:
+                device_info_str = device_info_str[:2000]
+            fingerprint.device_info = device_info_str
+            fingerprint.user_agent = user_agent_limited
         else:
             # Create new fingerprint
+            # Limit device_info size to prevent memory bloat
+            device_info_str = json.dumps(device_info) if device_info else None
+            if device_info_str and len(device_info_str) > 2000:
+                device_info_str = device_info_str[:2000]
             fingerprint = DeviceFingerprint(
                 user_id=user_id,
                 fingerprint_hash=fingerprint_hash,
-                device_info=json.dumps(device_info) if device_info else None,
-                user_agent=user_agent,
+                device_info=device_info_str,
+                user_agent=user_agent_limited,
                 ip_address=ip_address,
                 is_trusted=False  # New devices start as untrusted
             )
             db.session.add(fingerprint)
         
         db.session.commit()
+        
+        # Cleanup old device fingerprints periodically to manage memory
+        # Keep only the 10 most recent fingerprints per user, delete older ones
+        try:
+            user_fingerprints = DeviceFingerprint.query.filter_by(
+                user_id=user_id
+            ).order_by(DeviceFingerprint.last_seen_at.desc()).offset(10).all()
+            
+            if user_fingerprints:
+                for old_fp in user_fingerprints:
+                    db.session.delete(old_fp)
+                db.session.commit()
+        except Exception as cleanup_error:
+            # Don't fail the main operation if cleanup fails
+            print(f"Error cleaning up old device fingerprints: {cleanup_error}")
+            db.session.rollback()
+        
         return fingerprint
     except Exception as e:
         print(f"Error storing device fingerprint: {e}")
@@ -823,8 +886,8 @@ def webauthn_register_begin():
         if not user:
             return jsonify({'success': False, 'error': 'User not found'}), 404
         
-        # Get existing credentials for this user
-        existing_credentials = WebAuthnCredential.query.filter_by(user_id=user.id).all()
+        # Get existing credentials for this user (limit to 20 per user to manage memory)
+        existing_credentials = WebAuthnCredential.query.filter_by(user_id=user.id).limit(20).all()
         existing_credential_ids = [safe_b64decode(cred.credential_id) for cred in existing_credentials]
         
         # Generate registration options
@@ -967,8 +1030,8 @@ def webauthn_authenticate_begin():
             log_login_attempt(username, 'biometric', 'failed', user_id=None)
             return jsonify({'success': False, 'error': 'User not found'}), 404
         
-        # Get user's credentials
-        credentials = WebAuthnCredential.query.filter_by(user_id=user.id).all()
+        # Get user's credentials (limit to 20 per user to manage memory)
+        credentials = WebAuthnCredential.query.filter_by(user_id=user.id).limit(20).all()
         if not credentials:
             return jsonify({
                 'success': False, 
@@ -1055,8 +1118,9 @@ def webauthn_authenticate_complete():
         
         # Try to find credential by matching the raw credential ID bytes
         # Handle both base64-stored and integer-stored credential IDs
+        # Limit to 20 credentials per user to manage memory
         credential_record = None
-        for cred in WebAuthnCredential.query.filter_by(user_id=user.id).all():
+        for cred in WebAuthnCredential.query.filter_by(user_id=user.id).limit(20).all():
             try:
                 # Try base64 decode first (new format)
                 stored_id_bytes = safe_b64decode(cred.credential_id)
@@ -1088,7 +1152,7 @@ def webauthn_authenticate_complete():
             print(f"Credential lookup failed for user {user.id}")
             print(f"Browser credential rawId length: {len(credential_raw_id)}")
             print(f"Browser credential rawId (first 20 bytes): {credential_raw_id[:20]}")
-            stored_creds = WebAuthnCredential.query.filter_by(user_id=user.id).all()
+            stored_creds = WebAuthnCredential.query.filter_by(user_id=user.id).limit(20).all()
             for sc in stored_creds:
                 print(f"Stored credential_id: {sc.credential_id} (type: {type(sc.credential_id).__name__})")
             log_login_attempt(user.username, 'biometric', 'failed', user.id)
@@ -1410,29 +1474,36 @@ def admin_dashboard():
     # Python import statement: Imports get_active_sessions function from auth module
     from auth import get_active_sessions
     from models import ActiveSession
-    # Python dictionary assignment: Gets all active sessions
-    # get_active_sessions() returns list of ActiveSession objects for users currently logged in
-    active_sessions = get_active_sessions()
+    # Python dictionary assignment: Gets active sessions with limit to manage memory
+    # Limit to 100 active sessions to prevent memory issues
+    active_sessions = get_active_sessions(limit=100)
     user_data['active_sessions'] = active_sessions
     user_data['active_users_count'] = len(active_sessions)
     
     # Python comment: Marks device fingerprinting section
     # Get device information for active sessions
     # Python dictionary assignment: Gets device fingerprints for active users
+    # Limit processing to prevent memory issues with large datasets
     user_data['device_info'] = {}
-    for active_session in active_sessions:
+    # Process only first 50 active sessions to manage memory
+    for active_session in active_sessions[:50]:
         user_id = active_session.user_id
-        user = User.query.get(user_id)
-        if user:
-            # Get most recent device fingerprint for this user
-            device = DeviceFingerprint.query.filter_by(user_id=user_id).order_by(DeviceFingerprint.last_seen_at.desc()).first()
-            if device:
-                user_data['device_info'][user_id] = {
-                    'ip_address': device.ip_address,
-                    'user_agent': device.user_agent,
-                    'last_seen': device.last_seen_at,
-                    'is_trusted': device.is_trusted
-                }
+        try:
+            user = User.query.get(user_id)
+            if user:
+                # Get most recent device fingerprint for this user
+                device = DeviceFingerprint.query.filter_by(user_id=user_id).order_by(DeviceFingerprint.last_seen_at.desc()).first()
+                if device:
+                    user_data['device_info'][user_id] = {
+                        'ip_address': device.ip_address,
+                        'user_agent': device.user_agent[:200] if device.user_agent else None,  # Limit user agent length
+                        'last_seen': device.last_seen_at,
+                        'is_trusted': device.is_trusted
+                    }
+        except Exception as e:
+            # Continue processing other sessions if one fails
+            print(f"Error processing device info for user {user_id}: {e}")
+            continue
     
     # Python return statement: Renders admin dashboard template with user data
     # render_template() renders HTML template and passes data dictionary to template
@@ -1521,9 +1592,9 @@ def admin():
     if current_user.username != 'admin' or current_user.role != 'admin':
         # Python return statement: Returns 403 Forbidden error
         return "Access Denied. Only admin username can access this page.", 403
-    # Python variable: Queries database for all users
-    # User.query.all() returns list of all User objects in database
-    users = User.query.all()
+    # Python variable: Queries database for users with limit to manage memory
+    # Limit to 1000 users to prevent memory issues with large datasets
+    users = User.query.limit(1000).all()
     # Python import statement: Imports LoginAttempt model
     from models import LoginAttempt
     # Python variable: Gets 100 most recent successful login attempts
@@ -1545,8 +1616,9 @@ def manage_users():
     if current_user.username != 'admin' or current_user.role != 'admin':
         # Python return statement: Returns 403 Forbidden error
         return "Access Denied", 403
-    # Python variable: Gets all users from database
-    users = User.query.all()
+    # Python variable: Gets users from database with limit to manage memory
+    # Limit to 1000 users to prevent memory issues with large datasets
+    users = User.query.limit(1000).all()
     # Python return statement: Renders user management template
     return render_template('manage_users.html', users=users)
 
@@ -1702,14 +1774,15 @@ def admin_grades():
     if current_user.username != 'admin' or current_user.role != 'admin':
         # Python return statement: Returns 403 Forbidden error
         return "Access Denied", 403
-    # Python variable: Gets all grades ordered by creation date (newest first)
-    # .order_by() sorts by created_at descending
-    grades = Grade.query.order_by(Grade.created_at.desc()).all()
-    # Python variable: Gets all courses from database
-    courses = Course.query.all()
-    # Python variable: Gets all users with 'student' role
-    # .filter_by() filters users by role='student'
-    students = User.query.filter_by(role='student').all()
+    # Python variable: Gets grades ordered by creation date (newest first) with limit
+    # Limit to 500 most recent grades to manage memory
+    grades = Grade.query.order_by(Grade.created_at.desc()).limit(500).all()
+    # Python variable: Gets courses from database with limit
+    # Limit to 200 courses to prevent memory issues
+    courses = Course.query.limit(200).all()
+    # Python variable: Gets users with 'student' role with limit
+    # Limit to 1000 students to manage memory
+    students = User.query.filter_by(role='student').limit(1000).all()
     # Python return statement: Renders admin grades template with grades, courses, and students
     return render_template('admin_grades.html', grades=grades, courses=courses, students=students)
 
@@ -1777,12 +1850,15 @@ def add_course():
 def give_grades():
     # Python docstring: Documents what the function does
     """Give grades to students (professor only)"""
-    # Python variable: Gets all courses taught by current professor
-    courses = Course.query.filter_by(professor_id=current_user.id).all()
-    # Python variable: Gets all users with 'student' role
-    students = User.query.filter_by(role='student').all()
-    # Python variable: Gets all grades given by current professor, ordered by creation date
-    grades = Grade.query.filter_by(professor_id=current_user.id).order_by(Grade.created_at.desc()).all()
+    # Python variable: Gets courses taught by current professor with limit
+    # Limit to 100 courses per professor to manage memory
+    courses = Course.query.filter_by(professor_id=current_user.id).limit(100).all()
+    # Python variable: Gets users with 'student' role with limit
+    # Limit to 500 students to manage memory
+    students = User.query.filter_by(role='student').limit(500).all()
+    # Python variable: Gets grades given by current professor, ordered by creation date with limit
+    # Limit to 200 most recent grades to manage memory
+    grades = Grade.query.filter_by(professor_id=current_user.id).order_by(Grade.created_at.desc()).limit(200).all()
     # Python return statement: Renders give grades template with courses, students, and grades
     return render_template('give_grades.html', courses=courses, students=students, grades=grades)
 
@@ -1860,8 +1936,9 @@ def submit_grade():
 def student_grades():
     # Python docstring: Documents what the function does
     """View grades (student only)"""
-    # Python variable: Gets all grades for current student
-    grades = Grade.query.filter_by(student_id=current_user.id).all()
+    # Python variable: Gets grades for current student with limit
+    # Limit to 200 grades per student to manage memory
+    grades = Grade.query.filter_by(student_id=current_user.id).limit(200).all()
     # Python variable: Calculates GPA (Grade Point Average)
     # sum() adds all percentages, divides by count, defaults to 0 if no grades
     gpa = sum([g.percentage for g in grades]) / len(grades) if grades else 0
@@ -2000,8 +2077,9 @@ def access_history():
     # Python variable: Gets 50 most recent login attempts for current user
     # .filter_by() filters by user_id, .order_by() sorts by timestamp descending, .limit(50) gets top 50
     login_attempts = LoginAttempt.query.filter_by(user_id=current_user.id).order_by(LoginAttempt.timestamp.desc()).limit(50).all()
-    # Python variable: Gets all active sessions
-    active_sessions = get_active_sessions()
+    # Python variable: Gets active sessions with limit to manage memory
+    # Limit to 50 active sessions to prevent memory issues
+    active_sessions = get_active_sessions(limit=50)
     # Python variable: Filters active sessions to only current user's sessions
     user_sessions = [s for s in active_sessions if s.user_id == current_user.id]
     
@@ -2133,8 +2211,8 @@ def check_role(username):
 @login_required
 def register_biometric():
     """Page for registering biometric credentials"""
-    # Get user's existing credentials
-    credentials = WebAuthnCredential.query.filter_by(user_id=current_user.id).all()
+    # Get user's existing credentials (limit to 20 per user to manage memory)
+    credentials = WebAuthnCredential.query.filter_by(user_id=current_user.id).limit(20).all()
     return render_template('register_biometric.html', credentials=credentials)
 
 

@@ -59,9 +59,9 @@ with app.app_context():
     # String concatenation: Adds newline after separator
     print("="*50 + "\n")
     
-    # Database query: Retrieves all users from the database
-    # User.query.all() returns a list of all User objects in the database
-    users = User.query.all()
+    # Database query: Retrieves users from the database with limit to manage memory
+    # Limit to 1000 users to prevent memory issues with large datasets
+    users = User.query.limit(1000).all()
     
     # Python conditional: Checks if users list is empty (no users found)
     if not users:

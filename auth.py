@@ -110,7 +110,7 @@ def log_login_attempt(username, method, status, user_id=None):
     try:
         # Get IP address and user agent from request if available
         ip_address = request.remote_addr if request else None
-        user_agent = request.headers.get('User-Agent') if request else None
+        user_agent = request.headers.get('User-Agent', '')[:500] if request else None  # Limit user agent length
         
         # Normalize username to lowercase
         normalized_username = normalize_username(username)
@@ -128,6 +128,24 @@ def log_login_attempt(username, method, status, user_id=None):
         
         db.session.add(login_attempt)
         db.session.commit()
+        
+        # Cleanup old login attempts periodically to prevent database bloat
+        # Only cleanup failed attempts older than 30 days to save space
+        cleanup_threshold = get_est_time() - timedelta(days=30)
+        try:
+            old_failed_attempts = LoginAttempt.query.filter(
+                LoginAttempt.status == 'failed',
+                LoginAttempt.timestamp < cleanup_threshold
+            ).limit(1000).all()
+            
+            if old_failed_attempts:
+                for attempt in old_failed_attempts:
+                    db.session.delete(attempt)
+                db.session.commit()
+        except Exception as cleanup_error:
+            # Don't fail the main operation if cleanup fails
+            print(f"Error cleaning up old login attempts: {cleanup_error}")
+            db.session.rollback()
     except Exception as e:
         # Log error but don't break the application
         print(f"Error logging login attempt: {e}")
@@ -151,7 +169,7 @@ def track_session_activity(user_id, session_id):
         if active_session is None:
             # Session does not exist - create new one
             ip_address = request.remote_addr if request else None
-            user_agent = request.headers.get('User-Agent') if request else None
+            user_agent = request.headers.get('User-Agent', '')[:500] if request else None  # Limit user agent length
             
             active_session = ActiveSession(
                 user_id=user_id,
@@ -171,11 +189,14 @@ def track_session_activity(user_id, session_id):
         print(f"Error tracking session activity: {e}")
         db.session.rollback()
 
-def get_active_sessions():
+def get_active_sessions(limit=None):
     """
     Get all active sessions, removing expired ones.
     Sessions expire after 2 hours of inactivity.
     Uses UTC timezone for consistency.
+    
+    Args:
+        limit: Optional limit on number of sessions to return (default: None for all)
     
     Returns:
         List of ActiveSession objects that are still active
@@ -186,18 +207,36 @@ def get_active_sessions():
         # Convert to naive datetime for comparison (SQLite doesn't store timezone)
         expiration_time_naive = expiration_time
         
-        # Find and delete expired sessions
-        expired_sessions = ActiveSession.query.filter(
+        # Find and delete expired sessions in batches to manage memory
+        expired_sessions_query = ActiveSession.query.filter(
             ActiveSession.last_activity < expiration_time_naive
-        ).all()
+        )
         
-        for session in expired_sessions:
-            db.session.delete(session)
+        # Delete expired sessions in batches to avoid loading all into memory
+        batch_size = 100
+        deleted_count = 0
+        while True:
+            expired_batch = expired_sessions_query.limit(batch_size).all()
+            if not expired_batch:
+                break
+            
+            for session in expired_batch:
+                db.session.delete(session)
+            db.session.commit()
+            deleted_count += len(expired_batch)
+            
+            # Prevent infinite loop if there are too many expired sessions
+            if len(expired_batch) < batch_size:
+                break
         
-        db.session.commit()
+        if deleted_count > 0:
+            print(f"Cleaned up {deleted_count} expired sessions")
         
-        # Return all remaining active sessions, ordered by last activity (most recent first)
-        return ActiveSession.query.order_by(ActiveSession.last_activity.desc()).all()
+        # Return active sessions with optional limit to manage memory
+        query = ActiveSession.query.order_by(ActiveSession.last_activity.desc())
+        if limit:
+            return query.limit(limit).all()
+        return query.all()
     except Exception as e:
         print(f"Error getting active sessions: {e}")
         db.session.rollback()
